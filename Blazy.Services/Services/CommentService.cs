@@ -10,12 +10,12 @@ namespace Blazy.Services.Services;
 /// </summary>
 public class CommentService : Interfaces.ICommentService
 {
-    private readonly Interfaces.IRepository<Comment> _commentRepository;
+    private readonly Blazy.Repository.Interfaces.IRepository<Comment> _commentRepository;
     private readonly IPostRepository _postRepository;
     private readonly Blazy.Data.BlazyDbContext _context;
 
     public CommentService(
-        Interfaces.IRepository<Comment> commentRepository,
+        Blazy.Repository.Interfaces.IRepository<Comment> commentRepository,
         IPostRepository postRepository,
         Blazy.Data.BlazyDbContext context)
     {

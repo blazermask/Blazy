@@ -12,7 +12,7 @@ public static class DataInitializer
     /// <summary>
     /// Seeds the database with initial data
     /// </summary>
-    public static async Task SeedDataAsync(BlazyDbContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+    public static async Task SeedDataAsync(BlazyDbContext context, UserManager<User> userManager, RoleManager<IdentityRole<int>> roleManager)
     {
         // Ensure database is created
         await context.Database.EnsureCreatedAsync();
@@ -20,12 +20,12 @@ public static class DataInitializer
         // Create roles if they don't exist
         if (!await roleManager.RoleExistsAsync("Admin"))
         {
-            await roleManager.CreateAsync(new IdentityRole("Admin"));
+            await roleManager.CreateAsync(new IdentityRole<int>("Admin"));
         }
 
         if (!await roleManager.RoleExistsAsync("User"))
         {
-            await roleManager.CreateAsync(new IdentityRole("User"));
+            await roleManager.CreateAsync(new IdentityRole<int>("User"));
         }
 
         // Create admin user if it doesn't exist

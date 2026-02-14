@@ -1,28 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity;
 
 namespace Blazy.Core.Entities;
 
 /// <summary>
 /// Represents a user in the Blazy social media platform
 /// </summary>
-public class User
+public class User : IdentityUser<int>
 {
-    [Key]
-    public int Id { get; set; }
-
-    [Required]
     [MaxLength(50)]
-    public string Username { get; set; } = string.Empty;
-
-    [Required]
-    [MaxLength(100)]
-    [EmailAddress]
-    public string Email { get; set; } = string.Empty;
-
-    [Required]
-    [MaxLength(255)]
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? Username { get; set; }
 
     [MaxLength(50)]
     public string? FirstName { get; set; }

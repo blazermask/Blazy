@@ -8,7 +8,7 @@ namespace Blazy.Data;
 /// Database context for the Blazy application
 /// Manages all entity relationships and database operations
 /// </summary>
-public class BlazyDbContext : IdentityDbContext
+public class BlazyDbContext : IdentityDbContext<User, IdentityRole, int>
 {
     public BlazyDbContext(DbContextOptions<BlazyDbContext> options) : base(options)
     {

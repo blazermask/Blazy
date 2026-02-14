@@ -16,7 +16,7 @@ builder.Services.AddDbContext<BlazyDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity configuration
-builder.Services.AddIdentity<Blazy.Core.Entities.User, IdentityRole>(options =>
+builder.Services.AddIdentity<Blazy.Core.Entities.User, IdentityRole<int>>(options =>
 {
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
@@ -49,7 +49,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 
 // Register UserManager and RoleManager
 builder.Services.AddScoped<UserManager<Blazy.Core.Entities.User>>();
-builder.Services.AddScoped<RoleManager<IdentityRole>>();
+builder.Services.AddScoped<RoleManager<IdentityRole<int>>>();
 
 var app = builder.Build();
 

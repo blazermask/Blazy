@@ -1,6 +1,7 @@
 using Blazy.Core.DTOs;
 using Blazy.Core.Entities;
 using Blazy.Repository.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blazy.Services.Services;
 
