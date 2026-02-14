@@ -195,7 +195,7 @@ public static class DataInitializer
                     Content = "Just finished this pixel art piece! It took me about 3 hours but I'm really happy with how it turned out. Let me know what you think!<br><br>I'm planning to make more soon, so stay tuned! ✧",
                     Tags = new[] { "art" }
                 }
-                }
+                };
             };
 
             foreach (var samplePost in samplePosts)
@@ -275,4 +275,3 @@ public static class DataInitializer
 
         await context.SaveChangesAsync();
     }
-}
