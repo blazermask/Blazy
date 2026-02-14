@@ -33,7 +33,7 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
         // Configure User entity
         modelBuilder.Entity<User>(entity =>
         {
-            entity.Property(e => e.UserName).HasColumnName("Username");
+            entity.Property(e => e.UserName).HasMaxLength(50);
             entity.HasIndex(e => e.UserName).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.CustomHtml);

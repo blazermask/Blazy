@@ -9,8 +9,13 @@ namespace Blazy.Core.Entities;
 /// </summary>
 public class User : IdentityUser<int>
 {
+    [NotMapped]
     [MaxLength(50)]
-    public string? Username { get; set; }
+    public string? Username 
+    { 
+        get => UserName; 
+        set => UserName = value; 
+    }
 
     [MaxLength(50)]
     public string? FirstName { get; set; }

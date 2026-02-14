@@ -34,7 +34,7 @@ public static class DataInitializer
         {
             adminUser = new User
             {
-                Username = "admin",
+                UserName = "admin",
                 Email = "admin@blazy.com",
                 EmailConfirmed = true,
                 FirstName = "Admin",
@@ -125,7 +125,7 @@ public static class DataInitializer
             {
                 user = new User
                 {
-                    Username = sampleUser.Username,
+                    UserName = sampleUser.Username,
                     Email = sampleUser.Email,
                     EmailConfirmed = true,
                     FirstName = sampleUser.FirstName,
@@ -162,7 +162,7 @@ public static class DataInitializer
         await context.SaveChangesAsync();
 
         // Create sample posts if they don't exist
-        var users = context.Users.Where(u => u.Username != "admin").ToList();
+        var users = context.Users.Where(u => u.UserName != "admin").ToList();
         if (users.Count >= 2)
         {
             var samplePosts = new[]

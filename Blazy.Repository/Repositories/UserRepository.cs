@@ -18,7 +18,7 @@ public class UserRepository : Repository<Blazy.Core.Entities.User>, Interfaces.I
             .Include(u => u.Tags)
             .ThenInclude(ut => ut.Tag)
             .Include(u => u.Posts)
-            .FirstOrDefaultAsync(u => u.Username == username && !u.IsDeleted);
+            .FirstOrDefaultAsync(u => u.UserName == username && !u.IsDeleted);
     }
 
     public async Task<Blazy.Core.Entities.User?> GetByEmailAsync(string email)
@@ -69,7 +69,7 @@ public class UserRepository : Repository<Blazy.Core.Entities.User>, Interfaces.I
     {
         var query = _dbSet
             .Where(u => !u.IsDeleted &&
-                       (u.Username.Contains(searchTerm) ||
+                       (u.UserName.Contains(searchTerm) ||
                         u.Email.Contains(searchTerm) ||
                         (u.FirstName != null && u.FirstName.Contains(searchTerm)) ||
                         (u.LastName != null && u.LastName.Contains(searchTerm))));
