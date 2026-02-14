@@ -32,4 +32,5 @@ public class UserDto
     public int? BannedByAdminId { get; set; }
     public string? BannedByAdminUsername { get; set; }
     public bool IsAdmin { get; set; }
+    public bool IsDeleted { get; set; }
 }
