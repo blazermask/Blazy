@@ -45,14 +45,14 @@ public class AccountController : Controller
                 new Claim(ClaimTypes.NameIdentifier, result.User.Id.ToString())
             };
 
-            var claimsIdentity = new ClaimsIdentity(claims, "CookieAuth");
+            var claimsIdentity = new ClaimsIdentity(claims, "Identity.Application");
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = model.RememberMe,
                 ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
             };
 
-            await HttpContext.SignInAsync("CookieAuth", new ClaimsPrincipal(claimsIdentity), authProperties);
+            await HttpContext.SignInAsync("Identity.Application", new ClaimsPrincipal(claimsIdentity), authProperties);
 
             return RedirectToAction("Index", "Home");
         }
@@ -87,13 +87,13 @@ public class AccountController : Controller
                 new Claim(ClaimTypes.NameIdentifier, result.User.Id.ToString())
             };
 
-            var claimsIdentity = new ClaimsIdentity(claims, "CookieAuth");
+            var claimsIdentity = new ClaimsIdentity(claims, "Identity.Application");
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = false
             };
 
-            await HttpContext.SignInAsync("CookieAuth", new ClaimsPrincipal(claimsIdentity), authProperties);
+            await HttpContext.SignInAsync("Identity.Application", new ClaimsPrincipal(claimsIdentity), authProperties);
 
             return RedirectToAction("Index", "Home");
         }
@@ -105,7 +105,7 @@ public class AccountController : Controller
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        await HttpContext.SignOutAsync("CookieAuth");
+        await HttpContext.SignOutAsync("Identity.Application");
         return RedirectToAction("Index", "Home");
     }
 
