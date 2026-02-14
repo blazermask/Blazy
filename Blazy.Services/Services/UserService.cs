@@ -12,11 +12,13 @@ public class UserService : Interfaces.IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly UserManager<User> _userManager;
+    private readonly Blazy.Repository.Interfaces.IPostRepository _postRepository;
 
-    public UserService(IUserRepository userRepository, UserManager<User> userManager)
+    public UserService(IUserRepository userRepository, UserManager<User> userManager, Blazy.Repository.Interfaces.IPostRepository postRepository)
     {
         _userRepository = userRepository;
         _userManager = userManager;
+        _postRepository = postRepository;
     }
 
     public async Task<(bool Success, string Message, UserDto? User)> RegisterAsync(RegisterDto model)
@@ -321,6 +323,12 @@ public class UserService : Interfaces.IUserService
             return (false, "User not found.");
         }
 
+        // Protect the original admin account from self-deletion
+        if (user.UserName?.ToLower() == "admin")
+        {
+            return (false, "The original admin account cannot be deleted. This account is essential for website functionality.");
+        }
+
         // Verify username matches
         if (user.UserName != model.Username)
         {
@@ -333,6 +341,9 @@ public class UserService : Interfaces.IUserService
         {
             return (false, "Incorrect password.");
         }
+
+        // Delete all posts by the user
+        await _postRepository.DeletePostsByUserAsync(userId);
 
         // Store the original username to prevent reuse
         var deletedUsername = user.UserName;

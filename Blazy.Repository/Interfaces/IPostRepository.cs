@@ -69,4 +69,9 @@ public interface IPostRepository : IRepository<Post>
     Task<(IEnumerable<Post> Posts, int TotalCount)> GetAllPostsAsync(
         int pageIndex,
         int pageSize);
+
+    /// <summary>
+    /// Deletes all posts by a specific user
+    /// </summary>
+    Task DeletePostsByUserAsync(int userId);
 }

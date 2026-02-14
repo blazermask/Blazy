@@ -216,4 +216,14 @@ public class PostRepository : Repository<Blazy.Core.Entities.Post>, Interfaces.I
 
         return (posts, totalCount);
     }
+
+    public async Task DeletePostsByUserAsync(int userId)
+    {
+        var posts = await _dbSet
+            .Where(p => p.UserId == userId)
+            .ToListAsync();
+
+        _dbSet.RemoveRange(posts);
+        await _context.SaveChangesAsync();
+    }
 }

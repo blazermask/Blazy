@@ -90,7 +90,8 @@
         @if (User.Identity?.IsAuthenticated == true)
         {
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (int.TryParse(userIdClaim, out int postUserId) && postUserId == Model.UserId)
+            var isAdmin = User.IsInRole("Admin");
+            if (int.TryParse(userIdClaim, out int postUserId) && (postUserId == Model.UserId || isAdmin))
             {
                 <form asp-action="Delete" method="post" class="inline-form ms-2">
                     @Html.AntiForgeryToken()
@@ -101,6 +102,11 @@
         }
 
         <a asp-controller="Blog" asp-action="Index" asp-route-username="@Model.Username" class="btn">← Back to @Model.Username's Blog</a>
+        
+        @if (User.Identity?.IsAuthenticated == true && Model.UserId != currentUserId)
+        {
+            <a asp-controller="Report" asp-action="CreatePostReport" asp-route-postId="@Model.Id" class="btn btn-warning">⚠ Report Post</a>
+        }
         
         @if (User.Identity?.IsAuthenticated == true && Model.UserId == currentUserId)
         {
@@ -158,6 +164,11 @@
                                     <input type="hidden" name="postId" value="@Model.Id" />
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this comment?')">Delete</button>
                                 </form>
+                            }
+                            
+                            @if (comment.UserId != currentUserId)
+                            {
+                                <a asp-controller="Report" asp-action="CreateCommentReport" asp-route-commentId="@comment.Id" asp-route-postId="@Model.Id" class="btn btn-sm btn-warning">⚠ Report</a>
                             }
                         </div>
                     }

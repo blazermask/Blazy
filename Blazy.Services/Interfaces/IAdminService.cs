@@ -51,4 +51,29 @@ public interface IAdminService
     /// Get pending reports
     /// </summary>
     Task<(IEnumerable<ReportDto> Reports, int TotalCount)> GetPendingReportsAsync(int pageIndex, int pageSize);
+
+    /// <summary>
+    /// Delete a user account (admin only)
+    /// </summary>
+    Task<(bool Success, string Message)> DeleteUserAccountAsync(int adminId, int userId, string reason);
+
+    /// <summary>
+    /// Assign admin role to a user
+    /// </summary>
+    Task<(bool Success, string Message)> AssignAdminRoleAsync(int adminId, int targetUserId);
+
+    /// <summary>
+    /// Revoke admin role from a user (cannot revoke from original admin)
+    /// </summary>
+    Task<(bool Success, string Message)> RevokeAdminRoleAsync(int adminId, int targetUserId);
+
+    /// <summary>
+    /// Get all users with admin role
+    /// </summary>
+    Task<IEnumerable<UserDto>> GetAllAdminsAsync();
+
+    /// <summary>
+    /// Check if a user is the original admin (cannot be demoted)
+    /// </summary>
+    Task<bool> IsOriginalAdminAsync(int userId);
 }

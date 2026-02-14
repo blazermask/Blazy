@@ -13,15 +13,18 @@ public class CommentService : Interfaces.ICommentService
     private readonly Blazy.Repository.Interfaces.IRepository<Comment> _commentRepository;
     private readonly IPostRepository _postRepository;
     private readonly Blazy.Data.BlazyDbContext _context;
+    private readonly IUserRepository _userRepository;
 
     public CommentService(
         Blazy.Repository.Interfaces.IRepository<Comment> commentRepository,
         IPostRepository postRepository,
-        Blazy.Data.BlazyDbContext context)
+        Blazy.Data.BlazyDbContext context,
+        IUserRepository userRepository)
     {
         _commentRepository = commentRepository;
         _postRepository = postRepository;
         _context = context;
+        _userRepository = userRepository;
     }
 
     public async Task<(bool Success, string Message, CommentDto? Comment)> CreateCommentAsync(
@@ -33,6 +36,18 @@ public class CommentService : Interfaces.ICommentService
         if (post == null)
         {
             return (false, "Post not found.", null);
+        }
+
+        // Check if user is banned
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return (false, "User not found.", null);
+        }
+
+        if (user.IsBanned)
+        {
+            return (false, "You are banned and cannot post comments.", null);
         }
 
         var comment = new Comment

@@ -1,10 +1,11 @@
 @model (IEnumerable<Blazy.Core.DTOs.UserDto> Users, int TotalCount)
 @{
     ViewData["Title"] = "Manage Users";
+    var isOriginalAdmin = ViewBag.IsOriginalAdmin as bool? ?? false;
 }
 
 <div class="container mt-4">
-    <h1 class="mb-4">Manage Users</h1>
+    <h1 class="mb-4">👥 Manage Users</h1>
     
     @if (TempData["Success"] != null)
     {
@@ -42,6 +43,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Username</th>
+                            <th>Role</th>
                             <th>Status</th>
                             <th>Ban Info</th>
                             <th>Actions</th>
@@ -50,15 +52,36 @@
                     <tbody>
                         @foreach (var user in Model.Users)
                         {
+                            var isOriginalAdminUser = user.Username?.ToLower() == "admin";
                             <tr>
                                 <td>@user.Id</td>
-                                <td>@user.Username</td>
+                                <td>
+                                    <strong>@user.Username</strong>
+                                    @if (isOriginalAdminUser)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1">Owner</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.IsAdmin)
+                                    {
+                                        <span class="badge bg-primary">Admin</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">User</span>
+                                    }
+                                </td>
                                 <td>
                                     @if (user.IsBanned)
                                     {
                                         <span class="badge bg-@(user.IsPermanentlyBanned ? "danger" : "warning")">
                                             @(user.IsPermanentlyBanned ? "Permanently Banned" : "Temporarily Banned")
                                         </span>
+                                    }
+                                    else if (user.IsDeleted)
+                                    {
+                                        <span class="badge bg-dark">Deleted</span>
                                     }
                                     else
                                     {
@@ -73,24 +96,53 @@
                                             @if (!user.IsPermanentlyBanned && user.BanUntilDate.HasValue)
                                             {
                                                 <strong>Until:</strong> @user.BanUntilDate.Value.ToString("yyyy-MM-dd HH:mm")<br>
+                                            }
+                                            @if (!string.IsNullOrEmpty(user.BannedByAdminUsername))
+                                            {
                                                 <strong>Banned by:</strong> @user.BannedByAdminUsername
                                             }
                                         </div>
                                     }
                                 </td>
                                 <td>
-                                    <a asp-controller="Blog" asp-action="Index" asp-route-username="@user.Username" class="btn btn-sm btn-info me-2">View Profile</a>
-                                    @if (user.IsBanned)
-                                    {
-                                        <form asp-action="UnbanUser" method="post" class="d-inline">
-                                            <input type="hidden" name="id" value="@user.Id">
-                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to unban this user?')">Unban</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <a asp-action="BanUser" asp-route-id="@user.Id" class="btn btn-sm btn-danger">Ban</a>
-                                    }
+                                    <div class="btn-group-vertical" role="group">
+                                        <a asp-controller="Blog" asp-action="Index" asp-route-username="@user.Username" class="btn btn-sm btn-info mb-1">View Profile</a>
+                                        
+                                        @if (!user.IsDeleted && !isOriginalAdminUser)
+                                        {
+                                            @if (user.IsBanned)
+                                            {
+                                                <form asp-action="UnbanUser" method="post" class="d-inline mb-1">
+                                                    <input type="hidden" name="id" value="@user.Id">
+                                                    <button type="submit" class="btn btn-sm btn-success w-100" onclick="return confirm('Are you sure you want to unban this user?')">Unban</button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <a asp-action="BanUser" asp-route-id="@user.Id" class="btn btn-sm btn-warning mb-1">Ban User</a>
+                                            }
+
+                                            @* Only the original admin can assign admin roles *@
+                                            @if (isOriginalAdmin && !user.IsAdmin)
+                                            {
+                                                <form asp-action="AssignAdminRole" method="post" class="d-inline mb-1" 
+                                                      onsubmit="return confirm('Are you sure you want to make @user.Username an administrator? They will be able to delete posts and accounts.');">
+                                                    <input type="hidden" name="userId" value="@user.Id">
+                                                    <button type="submit" class="btn btn-sm btn-primary w-100">Make Admin</button>
+                                                </form>
+                                            }
+
+                                            <a asp-action="DeleteUserAccount" asp-route-id="@user.Id" class="btn btn-sm btn-danger">Delete Account</a>
+                                        }
+                                        else if (isOriginalAdminUser)
+                                        {
+                                            <button class="btn btn-sm btn-secondary" disabled title="Cannot modify the owner account">Protected</button>
+                                        }
+                                        else if (user.IsDeleted)
+                                        {
+                                            <span class="text-muted">Account Deleted</span>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

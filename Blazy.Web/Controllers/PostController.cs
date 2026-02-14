@@ -132,12 +132,32 @@ public class PostController : Controller
         var userId = GetCurrentUserId();
         var isAdmin = await _userService.IsAdminAsync(userId);
         
-        var result = await _postService.DeletePostByUserAsync(id, userId);
-
-        if (!result.Success)
+        // Admins can delete any post, users can only delete their own
+        if (isAdmin)
         {
-            TempData["Error"] = result.Message;
-            return RedirectToAction(nameof(Index), new { id });
+            // For admin deletion, use the admin service or direct deletion
+            var post = await _postService.GetPostByIdAsync(id);
+            if (post == null)
+            {
+                TempData["Error"] = "Post not found.";
+                return RedirectToAction(nameof(Index), new { id });
+            }
+            
+            var result = await _postService.DeletePostAsync(id, userId, true);
+            if (!result.Success)
+            {
+                TempData["Error"] = result.Message;
+                return RedirectToAction(nameof(Index), new { id });
+            }
+        }
+        else
+        {
+            var result = await _postService.DeletePostByUserAsync(id, userId);
+            if (!result.Success)
+            {
+                TempData["Error"] = result.Message;
+                return RedirectToAction(nameof(Index), new { id });
+            }
         }
 
         return RedirectToAction("Index", "Home");

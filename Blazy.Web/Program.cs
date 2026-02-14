@@ -74,7 +74,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Disabled for development/proxy environments
 app.UseStaticFiles();
 
 app.UseRouting();

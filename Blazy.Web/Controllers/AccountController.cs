@@ -1,7 +1,9 @@
 using Blazy.Core.DTOs;
+using Blazy.Core.Entities;
 using Blazy.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -13,10 +15,12 @@ namespace Blazy.Web.Controllers;
 public class AccountController : Controller
 {
     private readonly IUserService _userService;
+    private readonly UserManager<User> _userManager;
 
-    public AccountController(IUserService userService)
+    public AccountController(IUserService userService, UserManager<User> userManager)
     {
         _userService = userService;
+        _userManager = userManager;
     }
 
     [AllowAnonymous]
@@ -38,12 +42,23 @@ public class AccountController : Controller
         var result = await _userService.LoginAsync(model);
         if (result.Success)
         {
-            // Sign in the user
+            // Sign in the user with role claims
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, result.User!.Username),
                 new Claim(ClaimTypes.NameIdentifier, result.User.Id.ToString())
             };
+
+            // Add role claims so User.IsInRole() works
+            var user = await _userManager.FindByNameAsync(result.User.Username);
+            if (user != null)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+            }
 
             var claimsIdentity = new ClaimsIdentity(claims, "Identity.Application");
             var authProperties = new AuthenticationProperties
@@ -80,12 +95,23 @@ public class AccountController : Controller
         var result = await _userService.RegisterAsync(model);
         if (result.Success)
         {
-            // Auto-login after registration
+            // Auto-login after registration with role claims
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, result.User!.Username),
                 new Claim(ClaimTypes.NameIdentifier, result.User.Id.ToString())
             };
+
+            // Add role claims
+            var user = await _userManager.FindByNameAsync(result.User.Username);
+            if (user != null)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+            }
 
             var claimsIdentity = new ClaimsIdentity(claims, "Identity.Application");
             var authProperties = new AuthenticationProperties

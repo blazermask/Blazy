@@ -2,6 +2,7 @@ using Blazy.Core.DTOs;
 using Blazy.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 
 namespace Blazy.Web.Controllers;
 
@@ -26,10 +27,26 @@ public class AdminController : Controller
     }
 
     /// <summary>
-    /// Admin dashboard
+    /// Admin dashboard with audit logs and admin management
     /// </summary>
-    public IActionResult Index()
+    public async Task<IActionResult> Index(int page = 1, int pageSize = 20)
     {
+        var adminId = GetCurrentUserId();
+        
+        // Get audit logs
+        var auditLogs = await _adminService.GetAuditLogsAsync(page, pageSize);
+        ViewBag.AuditLogs = auditLogs.Logs;
+        ViewBag.TotalAuditLogs = auditLogs.TotalCount;
+        ViewBag.PageCount = (int)Math.Ceiling((double)auditLogs.TotalCount / pageSize);
+        ViewBag.CurrentPage = page;
+        
+        // Get all admins
+        var admins = await _adminService.GetAllAdminsAsync();
+        ViewBag.Admins = admins;
+        
+        // Check if current user is original admin (only they can manage roles)
+        ViewBag.IsOriginalAdmin = await _adminService.IsOriginalAdminAsync(adminId);
+        
         return View();
     }
 
@@ -38,15 +55,16 @@ public class AdminController : Controller
     /// </summary>
     public async Task<IActionResult> Users(int page = 1, int pageSize = 20, string search = "")
     {
+        var adminId = GetCurrentUserId();
+        ViewBag.IsOriginalAdmin = await _adminService.IsOriginalAdminAsync(adminId);
+
         if (string.IsNullOrEmpty(search))
         {
-            // Get all users (excluding permanently banned)
             var allUsers = await _userService.GetAllUsersAsync(page, pageSize);
             return View(allUsers);
         }
         else
         {
-            // Search users
             var searchResults = await _userService.SearchUsersAsync(search, page, pageSize);
             return View(searchResults);
         }
@@ -107,10 +125,9 @@ public class AdminController : Controller
     /// <summary>
     /// Manage posts page
     /// </summary>
-    public IActionResult Posts(int page = 1, int pageSize = 20)
+    public async Task<IActionResult> Posts(int page = 1, int pageSize = 20)
     {
-        // Get all posts (including deleted ones for admin)
-        var posts = _postService.GetAllPostsAsync(page, pageSize);
+        var posts = await _postService.GetAllPostsAsync(page, pageSize);
         return View(posts);
     }
 
@@ -221,6 +238,110 @@ public class AdminController : Controller
         }
 
         return RedirectToAction(nameof(Reports));
+    }
+
+    /// <summary>
+    /// Delete user account page
+    /// </summary>
+    public async Task<IActionResult> DeleteUserAccount(int id)
+    {
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        // Check if trying to delete original admin
+        if (await _adminService.IsOriginalAdminAsync(id))
+        {
+            TempData["Error"] = "Cannot delete the original admin account. It is essential for website functionality.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        return View(user);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteUserAccount(DeleteUserAccountDto model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var user = await _userService.GetUserByIdAsync(model.UserId);
+            return View(user);
+        }
+
+        var adminId = GetCurrentUserId();
+        var result = await _adminService.DeleteUserAccountAsync(adminId, model.UserId, model.Reason);
+
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Message;
+            return RedirectToAction(nameof(Users));
+        }
+
+        TempData["Success"] = result.Message;
+        return RedirectToAction(nameof(Users));
+    }
+
+    /// <summary>
+    /// Assign admin role to user - ONLY the original admin can do this
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignAdminRole(int userId)
+    {
+        var adminId = GetCurrentUserId();
+        
+        // Only the original admin account can assign admin roles
+        if (!await _adminService.IsOriginalAdminAsync(adminId))
+        {
+            TempData["Error"] = "Only the original admin account can assign admin roles.";
+            return RedirectToAction(nameof(Users));
+        }
+
+        var result = await _adminService.AssignAdminRoleAsync(adminId, userId);
+
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Message;
+        }
+        else
+        {
+            TempData["Success"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Users));
+    }
+
+    /// <summary>
+    /// Revoke admin role from user - ONLY the original admin can do this
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RevokeAdminRole(int userId)
+    {
+        var adminId = GetCurrentUserId();
+        
+        // Only the original admin account can revoke admin roles
+        if (!await _adminService.IsOriginalAdminAsync(adminId))
+        {
+            TempData["Error"] = "Only the original admin account can revoke admin roles.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var result = await _adminService.RevokeAdminRoleAsync(adminId, userId);
+
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Message;
+        }
+        else
+        {
+            TempData["Success"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Index));
     }
 
     private int GetCurrentUserId()

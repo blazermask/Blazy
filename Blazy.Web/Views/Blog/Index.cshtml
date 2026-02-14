@@ -80,6 +80,8 @@
                             <button type="submit" class="btn">★ Subscribe</button>
                         </form>
                     }
+                    
+                    <a asp-controller="Report" asp-action="CreateUserReport" asp-route-userId="@user.Id" asp-route-username="@user.Username" class="btn btn-warning">⚠ Report User</a>
                 </div>
             }
         }

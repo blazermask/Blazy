@@ -29,6 +29,12 @@ public class PostService : Interfaces.IPostService
             return (false, "User not found.", null);
         }
 
+        // Check if user is banned
+        if (user.IsBanned)
+        {
+            return (false, "You are banned and cannot create posts.", null);
+        }
+
         var post = new Post
         {
             UserId = userId,

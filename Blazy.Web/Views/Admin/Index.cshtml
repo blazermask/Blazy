@@ -1,49 +1,257 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
+    var auditLogs = ViewBag.AuditLogs as IEnumerable<Blazy.Core.DTOs.AdminAuditLogDto>;
+    var admins = ViewBag.Admins as IEnumerable<Blazy.Core.DTOs.UserDto>;
+    var isOriginalAdmin = ViewBag.IsOriginalAdmin as bool? ?? false;
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+    var pageCount = ViewBag.PageCount as int? ?? 1;
 }
 
 <div class="container mt-4">
-    <h1 class="mb-4">Admin Dashboard</h1>
+    <h1 class="mb-4">🛡️ Admin Dashboard</h1>
     
-    <div class="row">
-        <div class="col-md-4">
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-md-3">
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">Manage Users</h5>
-                    <p class="card-text">View, ban, or unban users</p>
+                    <h5 class="card-title">👥 Manage Users</h5>
+                    <p class="card-text">View, ban, or delete users</p>
                     <a asp-action="Users" class="btn btn-primary">Go to Users</a>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">Manage Posts</h5>
+                    <h5 class="card-title">📝 Manage Posts</h5>
                     <p class="card-text">View and delete posts</p>
                     <a asp-action="Posts" class="btn btn-primary">Go to Posts</a>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">Audit Logs</h5>
-                    <p class="card-text">View admin activity history</p>
-                    <a asp-action="AuditLogs" class="btn btn-primary">Go to Audit Logs</a>
+                    <h5 class="card-title">📋 Full Audit Logs</h5>
+                    <p class="card-text">View all admin activity</p>
+                    <a asp-action="AuditLogs" class="btn btn-primary">View All Logs</a>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">Reports</h5>
-                    <p class="card-text">View and manage user reports</p>
+                    <h5 class="card-title">🚨 Reports</h5>
+                    <p class="card-text">Manage user reports</p>
                     <a asp-action="Reports" class="btn btn-primary">Go to Reports</a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Admin Management Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">👑 Website Administrators</h4>
+        </div>
+        <div class="card-body">
+            @if (admins != null && admins.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Name</th>
+                                <th>Joined</th>
+                                @if (isOriginalAdmin)
+                                {
+                                    <th>Actions</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var admin in admins)
+                            {
+                                var isOriginal = admin.Username?.ToLower() == "admin";
+                                <tr>
+                                    <td>
+                                        <strong>@admin.Username</strong>
+                                        @if (isOriginal)
+                                        {
+                                            <span class="badge bg-warning text-dark ms-2">Owner</span>
+                                        }
+                                    </td>
+                                    <td>@admin.Email</td>
+                                    <td>@admin.FirstName @admin.LastName</td>
+                                    <td>@admin.CreatedAt.ToString("MMM dd, yyyy")</td>
+                                    @if (isOriginalAdmin)
+                                    {
+                                        <td>
+                                            @if (!isOriginal)
+                                            {
+                                                <form asp-action="RevokeAdminRole" method="post" class="d-inline" 
+                                                      onsubmit="return confirm('Are you sure you want to revoke admin role from @admin.Username? They will become a regular user and lose all admin privileges.');">
+                                                    <input type="hidden" name="userId" value="@admin.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        Revoke Admin
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted fst-italic">Owner — cannot be revoked</span>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No administrators found.</p>
+            }
+
+            @if (!isOriginalAdmin)
+            {
+                <p class="text-muted fst-italic mt-2">Only the original admin account can manage admin roles.</p>
+            }
+        </div>
+    </div>
+
+    <!-- Recent Admin Activity (Audit Log) -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h4 class="mb-0">📊 Recent Admin Activity (Audit Log)</h4>
+        </div>
+        <div class="card-body">
+            @if (auditLogs != null && auditLogs.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Admin</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                                <th>Reason / Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in auditLogs)
+                            {
+                                <tr>
+                                    <td>@log.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                    <td><strong>@log.AdminUsername</strong></td>
+                                    <td>
+                                        @switch (log.ActionType)
+                                        {
+                                            case "DeletePost":
+                                                <span class="badge bg-danger">Delete Post</span>
+                                                break;
+                                            case "BanUser":
+                                                <span class="badge bg-warning text-dark">Ban User</span>
+                                                break;
+                                            case "UnbanUser":
+                                                <span class="badge bg-success">Unban User</span>
+                                                break;
+                                            case "DeleteUserAccount":
+                                                <span class="badge bg-danger">Delete Account</span>
+                                                break;
+                                            case "AssignAdminRole":
+                                                <span class="badge bg-primary">Assign Admin</span>
+                                                break;
+                                            case "RevokeAdminRole":
+                                                <span class="badge bg-secondary">Revoke Admin</span>
+                                                break;
+                                            case "ReviewReport":
+                                                <span class="badge bg-info">Review Report</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-info">@log.ActionType</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (log.TargetPostId.HasValue)
+                                        {
+                                            <span>Post: @(log.TargetPostTitle ?? $"#{log.TargetPostId}")</span>
+                                        }
+                                        else if (log.TargetUserId.HasValue)
+                                        {
+                                            <span>User: @(log.TargetUsername ?? $"#{log.TargetUserId}")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(log.Reason))
+                                        {
+                                            <small>@log.Reason</small>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                @if (pageCount > 1)
+                {
+                    <nav aria-label="Audit log pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)">Previous</a>
+                            </li>
+                            @for (int i = 1; i <= pageCount; i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(currentPage == pageCount ? "disabled" : "")">
+                                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <p class="text-muted">No admin activity recorded yet. Actions like deleting posts, banning users, and managing admin roles will appear here.</p>
+            }
         </div>
     </div>
 </div>
