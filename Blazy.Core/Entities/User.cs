@@ -72,6 +72,41 @@ public class User : IdentityUser<int>
 
     public bool IsDeleted { get; set; } = false;
 
+    /// <summary>
+    /// Whether the user is banned
+    /// </summary>
+    public bool IsBanned { get; set; } = false;
+
+    /// <summary>
+    /// Whether the ban is permanent
+    /// </summary>
+    public bool IsPermanentlyBanned { get; set; } = false;
+
+    /// <summary>
+    /// Date when the temporary ban expires
+    /// </summary>
+    public DateTime? BanUntilDate { get; set; }
+
+    /// <summary>
+    /// Reason for the ban
+    /// </summary>
+    [MaxLength(500)]
+    public string? BanReason { get; set; }
+
+    /// <summary>
+    /// ID of the admin who banned this user (null if not banned)
+    /// </summary>
+    public int? BannedByAdminId { get; set; }
+
+    [ForeignKey("BannedByAdminId")]
+    public virtual User? BannedByAdmin { get; set; }
+
+    /// <summary>
+    /// The original username when the account was deleted (to prevent reuse)
+    /// </summary>
+    [MaxLength(50)]
+    public string? DeletedUsername { get; set; }
+
     // Navigation properties
     public virtual ICollection<Post> Posts { get; set; } = new List<Post>();
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();

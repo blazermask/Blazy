@@ -32,6 +32,25 @@ public class Post
 
     public bool IsPublished { get; set; } = true;
 
+    /// <summary>
+    /// Reason for deletion (null if not deleted)
+    /// </summary>
+    [MaxLength(500)]
+    public string? DeletionReason { get; set; }
+
+    /// <summary>
+    /// ID of the admin who deleted this post (null if not deleted by admin)
+    /// </summary>
+    public int? DeletedByAdminId { get; set; }
+
+    /// <summary>
+    /// Sequential number for deleted posts (to order them in the deleted posts tab)
+    /// </summary>
+    public int? DeletionNumber { get; set; }
+
+    [ForeignKey("DeletedByAdminId")]
+    public virtual User? DeletedByAdmin { get; set; }
+
     // Foreign key
     [Required]
     public int UserId { get; set; }
