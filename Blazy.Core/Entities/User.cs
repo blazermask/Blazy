@@ -27,7 +27,6 @@ public class User : IdentityUser<int>
     /// <summary>
     /// Custom HTML content for user's profile page
     /// </summary>
-    [Column(TypeName = "nvarchar(max)")]
     public string? CustomHtml { get; set; }
 
     /// <summary>
@@ -57,7 +56,6 @@ public class User : IdentityUser<int>
     /// <summary>
     /// Custom CSS for profile styling
     /// </summary>
-    [Column(TypeName = "nvarchar(max)")]
     public string? CustomCss { get; set; }
 
     [MaxLength(20)]

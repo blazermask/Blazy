@@ -1,4 +1,5 @@
 using Blazy.Core.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,14 +9,14 @@ namespace Blazy.Data;
 /// Database context for the Blazy application
 /// Manages all entity relationships and database operations
 /// </summary>
-public class BlazyDbContext : IdentityDbContext<User, IdentityRole, int>
+public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 {
     public BlazyDbContext(DbContextOptions<BlazyDbContext> options) : base(options)
     {
     }
 
     // DbSets for all entities
-    public DbSet<User> Users { get; set; }
+    public override DbSet<User> Users { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Subscription> Subscriptions { get; set; }
@@ -32,16 +33,17 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole, int>
         // Configure User entity
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasIndex(e => e.Username).IsUnique();
+            entity.Property(e => e.UserName).HasColumnName("Username");
+            entity.HasIndex(e => e.UserName).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
-            entity.Property(e => e.CustomHtml).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.CustomCss).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.CustomHtml);
+            entity.Property(e => e.CustomCss);
         });
 
         // Configure Post entity
         modelBuilder.Entity<Post>(entity =>
         {
-            entity.Property(e => e.Content).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.Content);
             entity.HasOne(e => e.User)
                   .WithMany(u => u.Posts)
                   .HasForeignKey(e => e.UserId)

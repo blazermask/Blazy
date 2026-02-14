@@ -13,7 +13,7 @@ builder.Services.AddControllersWithViews();
 
 // Database configuration
 builder.Services.AddDbContext<BlazyDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity configuration
 builder.Services.AddIdentity<Blazy.Core.Entities.User, IdentityRole<int>>(options =>
@@ -59,7 +59,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<BlazyDbContext>();
     var userManager = services.GetRequiredService<UserManager<Blazy.Core.Entities.User>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
     await DataInitializer.SeedDataAsync(context, userManager, roleManager);
 }

@@ -16,7 +16,6 @@ public class Post
     public string Title { get; set; } = string.Empty;
 
     [Required]
-    [Column(TypeName = "nvarchar(max)")]
     public string Content { get; set; } = string.Empty;
 
     [MaxLength(500)]
