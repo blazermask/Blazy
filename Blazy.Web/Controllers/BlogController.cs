@@ -82,6 +82,42 @@ public class BlogController : Controller
         return RedirectToAction(nameof(Index), new { username = user?.Username });
     }
 
+    /// <summary>
+    /// Displays a user's deleted posts
+    /// </summary>
+    public async Task<IActionResult> DeletedPosts(string username)
+    {
+        if (string.IsNullOrEmpty(username))
+        {
+            return RedirectToAction("Index", "Home");
+        }
+
+        int? currentUserId = User.Identity?.IsAuthenticated == true ? GetCurrentUserId() : null;
+
+        var user = await _userService.GetUserByUsernameAsync(username, currentUserId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        // Only show deleted posts to the post owner or admin
+        if (currentUserId != user.Id)
+        {
+            var currentUser = await _userService.GetUserByIdAsync(currentUserId.Value);
+            if (currentUser == null || !currentUser.IsAdmin)
+            {
+                return Forbid();
+            }
+        }
+
+        var deletedPosts = await _postService.GetDeletedPostsByUserAsync(user.Id, currentUserId);
+
+        ViewBag.User = user;
+        ViewBag.DeletedPosts = deletedPosts;
+
+        return View();
+    }
+
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

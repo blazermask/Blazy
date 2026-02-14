@@ -6,7 +6,10 @@
 
 <div class="profile-header">
     <h2>✧ My Profile ✧</h2>
-    <a asp-action="Edit" class="btn">Edit Profile</a>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" class="btn">Edit Profile</a>
+        <a asp-action="DeleteAccount" class="btn btn-danger">Delete Account</a>
+    </div>
 </div>
 
 <div class="profile-container">

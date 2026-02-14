@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "Search Users";
+    var users = ViewBag.Users as IEnumerable<Blazy.Core.DTOs.UserDto>;
+    var totalCount = ViewBag.TotalCount as int? ?? 0;
+    var searchQuery = ViewBag.SearchQuery as string ?? "";
+    var pageCount = ViewBag.PageCount as int? ?? 0;
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Search Users</h1>
+    
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Index" method="get" class="d-flex gap-2">
+                <input type="text" name="q" class="form-control" placeholder="Search by username, email, or name..." value="@searchQuery">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Search Results -->
+    @if (!string.IsNullOrEmpty(searchQuery))
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    Search Results (@totalCount found)
+                </h5>
+                
+                @if (users != null && users.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Profile</th>
+                                    <th>Posts</th>
+                                    <th>Subscribers</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in users)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@user.Username</strong>
+                                        </td>
+                                        <td>
+                                            <a asp-controller="Blog" asp-action="Index" asp-route-username="@user.Username" class="btn btn-sm btn-info">View Profile</a>
+                                        </td>
+                                        <td>@user.PostCount</td>
+                                        <td>@user.SubscriberCount</td>
+                                        <td>
+                                            @if (user.IsBanned)
+                                            {
+                                                <span class="badge bg-@(user.IsPermanentlyBanned ? "danger" : "warning")">
+                                                    @(user.IsPermanentlyBanned ? "Permanently Banned" : "Temporarily Banned")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    @if (pageCount > 1)
+                    {
+                        <nav aria-label="Page navigation" class="mt-3">
+                            <ul class="pagination justify-content-center">
+                                @for (int i = 1; i <= pageCount; i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <a class="page-link" asp-action="Index" asp-route-q="@searchQuery" asp-route-page="@i">@i</a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        No users found matching "@searchQuery".
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>

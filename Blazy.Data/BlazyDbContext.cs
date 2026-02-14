@@ -25,6 +25,8 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<Tag> Tags { get; set; }
     public DbSet<PostTag> PostTags { get; set; }
     public DbSet<UserTag> UserTags { get; set; }
+    public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
+    public DbSet<Report> Reports { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -38,6 +40,7 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             entity.HasIndex(e => e.Email).IsUnique();
             entity.Property(e => e.CustomHtml);
             entity.Property(e => e.CustomCss);
+            entity.HasIndex(e => e.DeletedUsername).IsUnique().HasFilter("DeletedUsername IS NOT NULL");
         });
 
         // Configure Post entity
@@ -153,6 +156,59 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
 
             // Ensure a tag can only be applied to a user once
             entity.HasIndex(e => new { e.UserId, e.TagId }).IsUnique();
+        });
+
+        // Configure AdminAuditLog entity
+        modelBuilder.Entity<AdminAuditLog>(entity =>
+        {
+            entity.HasOne(e => e.Admin)
+                  .WithMany()
+                  .HasForeignKey(e => e.AdminId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.TargetPost)
+                  .WithMany()
+                  .HasForeignKey(e => e.TargetPostId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.TargetUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.TargetUserId)
+                  .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Configure Report entity
+        modelBuilder.Entity<Report>(entity =>
+        {
+            entity.HasOne(e => e.Reporter)
+                  .WithMany()
+                  .HasForeignKey(e => e.ReporterId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ReviewedByAdmin)
+                  .WithMany()
+                  .HasForeignKey(e => e.ReviewedByAdminId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.TargetPost)
+                  .WithMany()
+                  .HasForeignKey(e => e.TargetPostId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.TargetComment)
+                  .WithMany()
+                  .HasForeignKey(e => e.TargetCommentId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.TargetUser)
+                  .WithMany()
+                  .HasForeignKey(e => e.TargetUserId)
+                  .OnDelete(DeleteBehavior.SetNull);
+
+            // Ensure a user can't report the same content twice
+            entity.HasIndex(e => new { e.ReporterId, e.ContentType, e.TargetPostId }).IsUnique().HasFilter("TargetPostId IS NOT NULL");
+            entity.HasIndex(e => new { e.ReporterId, e.ContentType, e.TargetCommentId }).IsUnique().HasFilter("TargetCommentId IS NOT NULL");
+            entity.HasIndex(e => new { e.ReporterId, e.ContentType, e.TargetUserId }).IsUnique().HasFilter("TargetUserId IS NOT NULL");
         });
     }
 }

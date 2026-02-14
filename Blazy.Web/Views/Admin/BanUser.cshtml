@@ -1,0 +1,85 @@
+@model Blazy.Core.DTOs.UserDto
+@{
+    ViewData["Title"] = "Ban User";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Ban User</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">User Information</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Username</dt>
+                <dd class="col-sm-9">@Model.Username</dd>
+                
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@Model.Email</dd>
+                
+                <dt class="col-sm-3">Member Since</dt>
+                <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
+                
+                <dt class="col-sm-3">Posts</dt>
+                <dd class="col-sm-9">@Model.PostCount</dd>
+                
+                <dt class="col-sm-3">Subscribers</dt>
+                <dd class="col-sm-9">@Model.SubscriberCount</dd>
+            </dl>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Ban Settings</h5>
+            <form asp-action="BanUser" method="post">
+                <input type="hidden" name="UserId" value="@Model.Id">
+                
+                <div class="mb-3">
+                    <label for="banType" class="form-label">Ban Type</label>
+                    <select class="form-select" id="banType" name="IsPermanent" onchange="toggleBanDate()">
+                        <option value="false">Temporary Ban</option>
+                        <option value="true">Permanent Ban</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3" id="banDateContainer">
+                    <label for="BanUntilDate" class="form-label">Ban Until Date</label>
+                    <input type="datetime-local" class="form-control" id="BanUntilDate" name="BanUntilDate">
+                    <div class="form-text">Select when the ban should expire</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="Reason" class="form-label">Ban Reason</label>
+                    <textarea class="form-control" id="Reason" name="Reason" rows="4" required maxlength="500"></textarea>
+                    <div class="form-text">Provide a reason for this ban (max 500 characters)</div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Ban User</button>
+                    <a asp-action="Users" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleBanDate() {
+            const banType = document.getElementById('banType').value;
+            const banDateContainer = document.getElementById('banDateContainer');
+            const banUntilDate = document.getElementById('BanUntilDate');
+            
+            if (banType === 'true') {
+                banDateContainer.style.display = 'none';
+                banUntilDate.required = false;
+            } else {
+                banDateContainer.style.display = 'block';
+                banUntilDate.required = true;
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', toggleBanDate);
+    </script>
+}

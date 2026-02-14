@@ -57,4 +57,16 @@ public interface IPostRepository : IRepository<Post>
         string tagName,
         int pageIndex,
         int pageSize);
+
+    /// <summary>
+    /// Gets deleted posts for a specific user
+    /// </summary>
+    Task<IEnumerable<Post>> GetDeletedPostsByUserAsync(int userId);
+
+    /// <summary>
+    /// Gets all posts with pagination (including deleted ones for admin)
+    /// </summary>
+    Task<(IEnumerable<Post> Posts, int TotalCount)> GetAllPostsAsync(
+        int pageIndex,
+        int pageSize);
 }

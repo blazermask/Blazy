@@ -1,0 +1,86 @@
+@model IEnumerable<Blazy.Core.DTOs.AdminAuditLogDto>
+@{
+    ViewData["Title"] = "My Audit Logs";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">My Audit Logs</h1>
+    
+    <div class="d-flex gap-2 mb-3">
+        <a asp-action="AuditLogs" class="btn btn-secondary">All Logs</a>
+        <a asp-action="MyAuditLogs" class="btn btn-primary active">My Actions</a>
+    </div>
+    
+    <!-- Audit Logs Table -->
+    <div class="card">
+        <div class="card-body">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Action</th>
+                                <th>Target</th>
+                                <th>Reason</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model)
+                            {
+                                <tr>
+                                    <td>@log.Id</td>
+                                    <td>
+                                        @switch (log.ActionType)
+                                        {
+                                            case "DeletePost":
+                                                <span class="badge bg-danger">Delete Post</span>
+                                                break;
+                                            case "BanUser":
+                                                <span class="badge bg-warning">Ban User</span>
+                                                break;
+                                            case "UnbanUser":
+                                                <span class="badge bg-success">Unban User</span>
+                                                break;
+                                            default:
+                                                <span class="badge bg-secondary">@log.ActionType</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (log.TargetPostId.HasValue)
+                                        {
+                                            <span>Post #@log.TargetPostId</span>
+                                            @if (!string.IsNullOrEmpty(log.TargetPostTitle))
+                                            {
+                                                <span class="text-muted">(@log.TargetPostTitle)</span>
+                                            }
+                                        }
+                                        else if (log.TargetUserId.HasValue)
+                                        {
+                                            <span>User @log.TargetUsername</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td>@log.Reason</td>
+                                    <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    You haven't performed any admin actions yet.
+                </div>
+            }
+        </div>
+    </div>
+</div>

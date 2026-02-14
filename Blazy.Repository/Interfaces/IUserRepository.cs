@@ -23,6 +23,11 @@ public interface IUserRepository : IRepository<User>
     Task<User?> GetUserWithDetailsAsync(int userId);
 
     /// <summary>
+    /// Gets a user by ID including if they are banned
+    /// </summary>
+    Task<User?> GetByIdIncludingBannedAsync(int userId);
+
+    /// <summary>
     /// Gets users that a specific user is subscribed to
     /// </summary>
     Task<IEnumerable<User>> GetSubscribedUsersAsync(int userId);
@@ -38,10 +43,20 @@ public interface IUserRepository : IRepository<User>
     Task<bool> IsSubscribedAsync(int subscriberId, int subscribedToId);
 
     /// <summary>
-    /// Gets users with pagination for search
+    /// Gets users with pagination for search (username only)
     /// </summary>
     Task<(IEnumerable<User> Users, int TotalCount)> SearchUsersAsync(
         string searchTerm,
         int pageIndex,
         int pageSize);
+
+    /// <summary>
+    /// Subscribe a user to another user
+    /// </summary>
+    Task<bool> SubscribeAsync(int subscriberId, int subscribedToId);
+
+    /// <summary>
+    /// Unsubscribe a user from another user
+    /// </summary>
+    Task<bool> UnsubscribeAsync(int subscriberId, int subscribedToId);
 }

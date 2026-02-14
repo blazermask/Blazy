@@ -54,6 +54,14 @@ public interface IUserService
         int? currentUserId = null);
 
     /// <summary>
+    /// Gets all users with pagination
+    /// </summary>
+    Task<(IEnumerable<UserDto> Users, int TotalCount)> GetAllUsersAsync(
+        int pageIndex,
+        int pageSize,
+        int? currentUserId = null);
+
+    /// <summary>
     /// Gets subscribed users for a user
     /// </summary>
     Task<IEnumerable<UserDto>> GetSubscribedUsersAsync(int userId, int? currentUserId = null);
@@ -77,4 +85,14 @@ public interface IUserService
     /// Updates user tags
     /// </summary>
     Task<(bool Success, string Message)> UpdateUserTagsAsync(int userId, List<string> tags);
+
+    /// <summary>
+    /// Delete user account with password confirmation
+    /// </summary>
+    Task<(bool Success, string Message)> DeleteAccountAsync(int userId, DeleteAccountDto model);
+
+    /// <summary>
+    /// Check if a username is available (including checking deleted usernames)
+    /// </summary>
+    Task<bool> IsUsernameAvailableAsync(string username);
 }

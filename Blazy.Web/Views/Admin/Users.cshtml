@@ -1,0 +1,117 @@
+@model (IEnumerable<Blazy.Core.DTOs.UserDto> Users, int TotalCount)
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Manage Users</h1>
+    
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <!-- Search Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Users" method="get" class="d-flex gap-2">
+                <input type="text" name="search" class="form-control" placeholder="Search users..." value="@Context.Request.Query["search"]">
+                <button type="submit" class="btn btn-primary">Search</button>
+                <a asp-action="Users" class="btn btn-secondary">Reset</a>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Status</th>
+                            <th>Ban Info</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td>@user.Id</td>
+                                <td>@user.Username</td>
+                                <td>
+                                    @if (user.IsBanned)
+                                    {
+                                        <span class="badge bg-@(user.IsPermanentlyBanned ? "danger" : "warning")">
+                                            @(user.IsPermanentlyBanned ? "Permanently Banned" : "Temporarily Banned")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (user.IsBanned)
+                                    {
+                                        <div>
+                                            <strong>Reason:</strong> @user.BanReason<br>
+                                            @if (!user.IsPermanentlyBanned && user.BanUntilDate.HasValue)
+                                            {
+                                                <strong>Until:</strong> @user.BanUntilDate.Value.ToString("yyyy-MM-dd HH:mm")<br>
+                                                <strong>Banned by:</strong> @user.BannedByAdminUsername
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-controller="Blog" asp-action="Index" asp-route-username="@user.Username" class="btn btn-sm btn-info me-2">View Profile</a>
+                                    @if (user.IsBanned)
+                                    {
+                                        <form asp-action="UnbanUser" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@user.Id">
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to unban this user?')">Unban</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <a asp-action="BanUser" asp-route-id="@user.Id" class="btn btn-sm btn-danger">Ban</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            @if (Model.TotalCount > 20)
+            {
+                <nav aria-label="Page navigation" class="mt-3">
+                    <ul class="pagination justify-content-center">
+                        @for (int i = 1; i <= (int)Math.Ceiling((double)Model.TotalCount / 20); i++)
+                        {
+                            <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                                <a class="page-link" asp-action="Users" asp-route-page="@i" asp-route-search="@Context.Request.Query["search"]">@i</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

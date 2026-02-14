@@ -181,4 +181,39 @@ public class PostRepository : Repository<Blazy.Core.Entities.Post>, Interfaces.I
 
         return (posts, totalCount);
     }
+
+    public async Task<IEnumerable<Blazy.Core.Entities.Post>> GetDeletedPostsByUserAsync(int userId)
+    {
+        return await _dbSet
+            .Where(p => p.UserId == userId && p.IsDeleted)
+            .Include(p => p.User)
+            .Include(p => p.DeletedByAdmin)
+            .Include(p => p.Tags)
+            .ThenInclude(pt => pt.Tag)
+            .OrderBy(p => p.DeletionNumber)
+            .ToListAsync();
+    }
+
+    public async Task<(IEnumerable<Blazy.Core.Entities.Post> Posts, int TotalCount)> GetAllPostsAsync(
+        int pageIndex,
+        int pageSize)
+    {
+        var query = _dbSet
+            .Include(p => p.User)
+            .Include(p => p.Tags)
+            .ThenInclude(pt => pt.Tag)
+            .Include(p => p.Likes)
+            .Include(p => p.Dislikes)
+            .Include(p => p.Comments)
+            .OrderByDescending(p => p.CreatedAt);
+
+        var totalCount = await query.CountAsync();
+
+        var posts = await query
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (posts, totalCount);
+    }
 }

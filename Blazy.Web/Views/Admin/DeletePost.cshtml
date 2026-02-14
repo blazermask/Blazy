@@ -1,0 +1,79 @@
+@model Blazy.Core.DTOs.PostDto
+@{
+    ViewData["Title"] = "Delete Post";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Delete Post</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Post Information</h5>
+            <div class="mb-3">
+                <label class="form-label fw-bold">Title:</label>
+                <p>@Model.Title</p>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Author:</label>
+                <p>
+                    <a asp-controller="Blog" asp-action="Index" asp-route-username="@Model.Username">@Model.Username</a>
+                </p>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Content Preview:</label>
+                <p class="text-muted">@(Model.Content.Length > 300 ? Model.Content.Substring(0, 300) + "..." : Model.Content)</p>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Created:</label>
+                <p>@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</p>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Likes:</label>
+                <p>@Model.LikeCount</p>
+            </div>
+            
+            @if (Model.Tags.Any())
+            {
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tags:</label>
+                    <p>
+                        @foreach (var tag in Model.Tags)
+                        {
+                            <span class="badge bg-secondary me-1">@tag</span>
+                        }
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <div class="card mt-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="card-title mb-0">⚠️ Delete Post</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Warning:</strong> This post will be marked as deleted and only visible in the author's "Deleted Posts" tab.
+            </div>
+            
+            <form asp-action="DeletePost" method="post">
+                <input type="hidden" name="PostId" value="@Model.Id">
+                
+                <div class="mb-3">
+                    <label for="Reason" class="form-label">Deletion Reason</label>
+                    <textarea class="form-control" id="Reason" name="Reason" rows="4" required maxlength="500"></textarea>
+                    <div class="form-text">Provide a reason for this deletion (max 500 characters)</div>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Delete Post</button>
+                    <a asp-controller="Post" asp-action="Index" asp-route-id="@Model.Id" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

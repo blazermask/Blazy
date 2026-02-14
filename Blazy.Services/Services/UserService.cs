@@ -21,16 +21,15 @@ public class UserService : Interfaces.IUserService
 
     public async Task<(bool Success, string Message, UserDto? User)> RegisterAsync(RegisterDto model)
     {
-        // Check if username already exists
-        var existingUser = await _userRepository.GetByUsernameAsync(model.Username);
-        if (existingUser != null)
+        // Check if username already exists or was used by a deleted account
+        if (!await IsUsernameAvailableAsync(model.Username))
         {
             return (false, "Username is already taken.", null);
         }
 
         // Check if email already exists
-        existingUser = await _userRepository.GetByEmailAsync(model.Email);
-        if (existingUser != null)
+        var emailUser = await _userRepository.GetByEmailAsync(model.Email);
+        if (emailUser != null)
         {
             return (false, "Email is already registered.", null);
         }
@@ -165,6 +164,34 @@ public class UserService : Interfaces.IUserService
         return (userDtos, totalCount);
     }
 
+    public async Task<(IEnumerable<UserDto> Users, int TotalCount)> GetAllUsersAsync(
+        int pageIndex,
+        int pageSize,
+        int? currentUserId = null)
+    {
+        var users = await _userRepository.GetAllAsync();
+        var activeUsers = users.Where(u => !u.IsDeleted && !u.IsPermanentlyBanned).ToList();
+        var totalCount = activeUsers.Count;
+
+        var paginatedUsers = activeUsers
+            .OrderBy(u => u.Username)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        var userDtos = new List<UserDto>();
+        foreach (var user in paginatedUsers)
+        {
+            var userDto = await MapToUserDto(user, currentUserId);
+            if (userDto != null)
+            {
+                userDtos.Add(userDto);
+            }
+        }
+
+        return (userDtos, totalCount);
+    }
+
     public async Task<IEnumerable<UserDto>> GetSubscribedUsersAsync(int userId, int? currentUserId = null)
     {
         var users = await _userRepository.GetSubscribedUsersAsync(userId);
@@ -202,23 +229,24 @@ public class UserService : Interfaces.IUserService
             return (false, "You are already subscribed to this user.");
         }
 
-        var subscription = new Subscription
+        var success = await _userRepository.SubscribeAsync(subscriberId, subscribedToId);
+        if (success)
         {
-            SubscriberId = subscriberId,
-            SubscribedToId = subscribedToId,
-            CreatedAt = DateTime.UtcNow
-        };
+            return (true, "Successfully subscribed!");
+        }
 
-        // Use the context directly to add the subscription
-        // We'll need to inject the context or create a subscription repository
-        // For now, let's assume this works through the subscription entity
-        return (false, "Subscription not implemented - needs separate repository");
+        return (false, "Failed to subscribe.");
     }
 
     public async Task<(bool Success, string Message)> UnsubscribeAsync(int subscriberId, int subscribedToId)
     {
-        // This would need a SubscriptionRepository to implement properly
-        return (false, "Unsubscribe not implemented - needs separate repository");
+        var success = await _userRepository.UnsubscribeAsync(subscriberId, subscribedToId);
+        if (success)
+        {
+            return (true, "Successfully unsubscribed!");
+        }
+
+        return (false, "Failed to unsubscribe or subscription not found.");
     }
 
     public async Task<bool> IsAdminAsync(int userId)
@@ -247,6 +275,12 @@ public class UserService : Interfaces.IUserService
 
     private async Task<UserDto> MapToUserDto(User user, int? currentUserId)
     {
+        var bannedByAdminUsername = user.BannedByAdminId.HasValue
+            ? (await _userRepository.GetByIdAsync(user.BannedByAdminId.Value))?.Username
+            : null;
+
+        var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+
         return new UserDto
         {
             Id = user.Id,
@@ -268,7 +302,68 @@ public class UserService : Interfaces.IUserService
             PostCount = user.Posts.Count(p => !p.IsDeleted),
             SubscriberCount = user.Subscribers.Count,
             IsCurrentUser = currentUserId.HasValue && currentUserId.Value == user.Id,
-            IsSubscribed = currentUserId.HasValue && await _userRepository.IsSubscribedAsync(currentUserId.Value, user.Id)
+            IsSubscribed = currentUserId.HasValue && await _userRepository.IsSubscribedAsync(currentUserId.Value, user.Id),
+            IsBanned = user.IsBanned,
+            IsPermanentlyBanned = user.IsPermanentlyBanned,
+            BanReason = user.BanReason,
+            BanUntilDate = user.BanUntilDate,
+            BannedByAdminId = user.BannedByAdminId,
+            BannedByAdminUsername = bannedByAdminUsername,
+            IsAdmin = isAdmin
         };
+    }
+
+    public async Task<(bool Success, string Message)> DeleteAccountAsync(int userId, DeleteAccountDto model)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return (false, "User not found.");
+        }
+
+        // Verify username matches
+        if (user.UserName != model.Username)
+        {
+            return (false, "Username does not match.");
+        }
+
+        // Verify password
+        var passwordCheck = await _userManager.CheckPasswordAsync(user, model.Password);
+        if (!passwordCheck)
+        {
+            return (false, "Incorrect password.");
+        }
+
+        // Store the original username to prevent reuse
+        var deletedUsername = user.UserName;
+
+        // Mark user as deleted but keep the record
+        user.IsDeleted = true;
+        user.UserName = $"deleted_{user.Id}_{Guid.NewGuid().ToString().Substring(0, 8)}";
+        user.Email = $"deleted_{user.Id}@deleted.com";
+        user.NormalizedUserName = user.UserName.ToUpper();
+        user.NormalizedEmail = user.Email.ToUpper();
+        user.DeletedUsername = deletedUsername;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateAsync(user);
+
+        return (true, "Account deleted successfully. Your username cannot be reused.");
+    }
+
+    public async Task<bool> IsUsernameAvailableAsync(string username)
+    {
+        // Check if username is taken by an active user
+        var activeUser = await _userRepository.GetByUsernameAsync(username);
+        if (activeUser != null)
+        {
+            return false;
+        }
+
+        // Check if username was used by a deleted user
+        var allUsers = await _userRepository.GetAllAsync();
+        var deletedWithUsername = allUsers.Any(u => u.DeletedUsername == username);
+        
+        return !deletedWithUsername;
     }
 }

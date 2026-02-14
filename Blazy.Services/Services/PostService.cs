@@ -43,16 +43,19 @@ public class PostService : Interfaces.IPostService
         await _postRepository.AddAsync(post);
 
         // Add tags to post
-        if (model.Tags.Any())
+        // Filter out empty or whitespace-only tags
+        var validTags = model.Tags.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+        
+        if (validTags.Any())
         {
-            foreach (var tagName in model.Tags)
+            foreach (var tagName in validTags)
             {
                 var tag = await _context.Tags.FirstOrDefaultAsync(t => t.Name == tagName);
                 if (tag == null)
                 {
                     tag = new Tag
                     {
-                        Name = tagName,
+                        Name = tagName.Trim(),
                         CreatedAt = DateTime.UtcNow
                     };
                     _context.Tags.Add(tag);
@@ -346,6 +349,10 @@ public class PostService : Interfaces.IPostService
         var isLiked = currentUserId.HasValue && post.Likes.Any(l => l.UserId == currentUserId.Value);
         var isDisliked = currentUserId.HasValue && post.Dislikes.Any(d => d.UserId == currentUserId.Value);
 
+        var deletedByAdminUsername = post.DeletedByAdminId.HasValue
+            ? (await _userRepository.GetByIdAsync(post.DeletedByAdminId.Value))?.Username
+            : null;
+
         return new PostDto
         {
             Id = post.Id,
@@ -361,7 +368,77 @@ public class PostService : Interfaces.IPostService
             CommentCount = post.Comments.Count(c => !c.IsDeleted),
             IsLiked = isLiked,
             IsDisliked = isDisliked,
-            Tags = post.Tags.Select(pt => pt.Tag.Name).ToList()
+            Tags = post.Tags.Select(pt => pt.Tag.Name).ToList(),
+            IsDeleted = post.IsDeleted,
+            DeletionReason = post.DeletionReason,
+            DeletionNumber = post.DeletionNumber,
+            DeletedByAdminId = post.DeletedByAdminId,
+            DeletedByAdminUsername = deletedByAdminUsername,
+            DeletedAt = post.UpdatedAt
         };
+    }
+
+    public async Task<IEnumerable<PostDto>> GetDeletedPostsByUserAsync(int userId, int? currentUserId = null)
+    {
+        var posts = await _postRepository.GetDeletedPostsByUserAsync(userId);
+
+        var postDtos = new List<PostDto>();
+        foreach (var post in posts)
+        {
+            var postDto = await MapToPostDto(post, currentUserId);
+            if (postDto != null)
+            {
+                postDtos.Add(postDto);
+            }
+        }
+
+        return postDtos;
+    }
+
+    public async Task<(IEnumerable<PostDto> Posts, int TotalCount)> GetAllPostsAsync(
+        int pageIndex,
+        int pageSize,
+        int? currentUserId = null)
+    {
+        var (posts, totalCount) = await _postRepository.GetAllPostsAsync(pageIndex, pageSize);
+
+        var postDtos = new List<PostDto>();
+        foreach (var post in posts)
+        {
+            var postDto = await MapToPostDto(post, currentUserId);
+            if (postDto != null)
+            {
+                postDtos.Add(postDto);
+            }
+        }
+
+        return (postDtos, totalCount);
+    }
+
+    public async Task<(bool Success, string Message)> DeletePostByUserAsync(int postId, int userId)
+    {
+        var post = await _postRepository.GetByIdAsync(postId);
+        if (post == null)
+        {
+            return (false, "Post not found.");
+        }
+
+        if (post.UserId != userId)
+        {
+            return (false, "You don't have permission to delete this post.");
+        }
+
+        // Get the next deletion number for the user
+        var maxDeletionNumber = await _context.Posts
+            .Where(p => p.UserId == userId && p.DeletionNumber.HasValue)
+            .MaxAsync(p => (int?)p.DeletionNumber) ?? 0;
+
+        post.IsDeleted = true;
+        post.DeletionReason = "Deleted by user";
+        post.DeletionNumber = maxDeletionNumber + 1;
+        post.UpdatedAt = DateTime.UtcNow;
+
+        await _postRepository.UpdateAsync(post);
+        return (true, "Post deleted successfully!");
     }
 }

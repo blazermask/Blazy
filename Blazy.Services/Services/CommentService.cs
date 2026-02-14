@@ -105,4 +105,24 @@ public class CommentService : Interfaces.ICommentService
             Username = comment.User.Username
         };
     }
+
+    public async Task<(bool Success, string Message)> DeleteCommentByUserAsync(int commentId, int userId)
+    {
+        var comment = await _commentRepository.GetByIdAsync(commentId);
+        if (comment == null)
+        {
+            return (false, "Comment not found.");
+        }
+
+        if (comment.UserId != userId)
+        {
+            return (false, "You don't have permission to delete this comment.");
+        }
+
+        comment.IsDeleted = true;
+        comment.UpdatedAt = DateTime.UtcNow;
+
+        await _commentRepository.UpdateAsync(comment);
+        return (true, "Comment deleted successfully!");
+    }
 }

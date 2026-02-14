@@ -1,0 +1,213 @@
+@model (IEnumerable<Blazy.Core.DTOs.ReportDto> Reports, int TotalCount)
+@{
+    ViewData["Title"] = "Reports Management";
+    var reports = ViewBag.Reports as IEnumerable<Blazy.Core.DTOs.ReportDto>;
+    var totalCount = ViewBag.TotalCount as int? ?? 0;
+    var status = ViewBag.Status as string ?? "all";
+    var pageCount = ViewBag.PageCount as int? ?? 0;
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Reports Management</h1>
+    
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link @(status == "all" ? "active" : "")" asp-action="Reports" asp-route-status="all">All Reports (@totalCount)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(status == "pending" ? "active" : "")" asp-action="Reports" asp-route-status="pending">Pending Reports</a>
+        </li>
+    </ul>
+    
+    <!-- Reports Table -->
+    @if (reports != null && reports.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Reporter</th>
+                                <th>Type</th>
+                                <th>Target</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var report in reports)
+                            {
+                                <tr>
+                                    <td>@report.Id</td>
+                                    <td>@report.ReporterUsername</td>
+                                    <td>
+                                        <span class="badge bg-info">@report.ContentType</span>
+                                    </td>
+                                    <td>
+                                        @if (report.ContentType == "Post" && report.TargetPostId.HasValue)
+                                        {
+                                            <span>Post #@report.TargetPostId</span>
+                                            if (!string.IsNullOrEmpty(report.TargetPostTitle))
+                                            {
+                                                <br><small class="text-muted">"@report.TargetPostTitle"</small>
+                                            }
+                                        }
+                                        else if (report.ContentType == "Comment" && report.TargetCommentId.HasValue)
+                                        {
+                                            <span>Comment #@report.TargetCommentId</span>
+                                            if (!string.IsNullOrEmpty(report.TargetCommentContent))
+                                            {
+                                                <br><small class="text-muted">"@(report.TargetCommentContent.Length > 50 ? report.TargetCommentContent.Substring(0, 50) + "..." : report.TargetCommentContent)"</small>
+                                            }
+                                        }
+                                        else if (report.ContentType == "Account" && report.TargetUserId.HasValue)
+                                        {
+                                            <span>User: @report.TargetUsername</span>
+                                        }
+                                    </td>
+                                    <td>@report.Reason</td>
+                                    <td>
+                                        @if (report.Status == "Pending")
+                                        {
+                                            <span class="badge bg-warning">Pending</span>
+                                        }
+                                        else if (report.Status == "Resolved")
+                                        {
+                                            <span class="badge bg-success">Resolved</span>
+                                        }
+                                        else if (report.Status == "Dismissed")
+                                        {
+                                            <span class="badge bg-secondary">Dismissed</span>
+                                        }
+                                    </td>
+                                    <td>@report.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        @if (!report.IsReviewed)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#reviewModal_@report.Id">Review</button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Reviewed by @report.ReviewedByAdminUsername</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                @if (pageCount > 1)
+                {
+                    <nav aria-label="Page navigation" class="mt-3">
+                        <ul class="pagination justify-content-center">
+                            @for (int i = 1; i <= pageCount; i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link" asp-action="Reports" asp-route-status="@status" asp-route-page="@i">@i</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+        
+        <!-- Review Modals -->
+        @foreach (var report in reports.Where(r => !r.IsReviewed))
+        {
+            <div class="modal fade" id="reviewModal_@report.Id" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Review Report #@report.Id</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form asp-action="ReviewReport" method="post">
+                            <div class="modal-body">
+                                <input type="hidden" name="reportId" value="@report.Id" />
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Reporter:</label>
+                                    <p>@report.ReporterUsername</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Content Type:</label>
+                                    <p>@report.ContentType</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Reported Content:</label>
+                                    @if (report.ContentType == "Post" && !string.IsNullOrEmpty(report.TargetPostTitle))
+                                    {
+                                        <p>"@report.TargetPostTitle"</p>
+                                    }
+                                    else if (report.ContentType == "Comment" && !string.IsNullOrEmpty(report.TargetCommentContent))
+                                    {
+                                        <p>"@report.TargetCommentContent"</p>
+                                    }
+                                    else if (report.ContentType == "Account")
+                                    {
+                                        <p>@report.TargetUsername</p>
+                                    }
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Reason:</label>
+                                    <p>@report.Reason</p>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="status_@report.Id" class="form-label">Action:</label>
+                                    <select class="form-select" id="status_@report.Id" name="status" required>
+                                        <option value="Resolved">Resolve</option>
+                                        <option value="Dismissed">Dismiss</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="adminNotes_@report.Id" class="form-label">Admin Notes:</label>
+                                    <textarea class="form-control" id="adminNotes_@report.Id" name="adminNotes" rows="3" maxlength="500"></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Submit Review</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No reports found.
+        </div>
+    }
+</div>

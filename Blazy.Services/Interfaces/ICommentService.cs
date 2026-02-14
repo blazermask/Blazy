@@ -24,4 +24,9 @@ public interface ICommentService
     /// Deletes a comment
     /// </summary>
     Task<(bool Success, string Message)> DeleteCommentAsync(int commentId, int userId, bool isAdmin);
+
+    /// <summary>
+    /// User deletes their own comment
+    /// </summary>
+    Task<(bool Success, string Message)> DeleteCommentByUserAsync(int commentId, int userId);
 }

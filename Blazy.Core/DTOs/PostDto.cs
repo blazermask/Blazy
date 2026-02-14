@@ -20,4 +20,10 @@ public class PostDto
     public bool IsLiked { get; set; }
     public bool IsDisliked { get; set; }
     public List<string> Tags { get; set; } = new List<string>();
+    public bool IsDeleted { get; set; }
+    public string? DeletionReason { get; set; }
+    public int? DeletionNumber { get; set; }
+    public int? DeletedByAdminId { get; set; }
+    public string? DeletedByAdminUsername { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

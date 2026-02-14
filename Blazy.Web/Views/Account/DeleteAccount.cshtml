@@ -1,0 +1,77 @@
+@model Blazy.Core.DTOs.UserDto
+@{
+    ViewData["Title"] = "Delete Account";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Delete Account</h1>
+    
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["Error"]
+        </div>
+    }
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Account Information</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Username</dt>
+                <dd class="col-sm-9">@Model.Username</dd>
+                
+                <dt class="col-sm-3">Member Since</dt>
+                <dd class="col-sm-9">@Model.CreatedAt.ToString("MMMM dd, yyyy")</dd>
+                
+                <dt class="col-sm-3">Posts</dt>
+                <dd class="col-sm-9">@Model.PostCount</dd>
+                
+                <dt class="col-sm-3">Subscribers</dt>
+                <dd class="col-sm-9">@Model.SubscriberCount</dd>
+            </dl>
+        </div>
+    </div>
+    
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5 class="card-title mb-0">⚠️ Danger Zone - Delete Account</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <strong>Warning:</strong> This action is irreversible.
+            </div>
+            
+            <ul class="mb-4">
+                <li>Your account will be permanently deleted</li>
+                <li>Your username cannot be reused by anyone</li>
+                <li>Your posts will be marked as deleted</li>
+                <li>Your comments will be marked as deleted</li>
+                <li>All your data will be removed from public view</li>
+            </ul>
+            
+            <form asp-action="DeleteAccount" method="post">
+                <div class="mb-3">
+                    <label for="Username" class="form-label">Confirm Username</label>
+                    <input type="text" class="form-control" id="Username" name="Username" required placeholder="Type your username to confirm">
+                    <div class="form-text">Please type your username to confirm deletion</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="Password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="Password" name="Password" required placeholder="Enter your password">
+                    <div class="form-text">Please enter your password to confirm</div>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirmCheckbox" required>
+                    <label class="form-check-label" for="confirmCheckbox">
+                        I understand that this action is irreversible and my username cannot be reused
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-danger">Delete My Account</button>
+                <a asp-action="Profile" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>

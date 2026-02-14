@@ -176,6 +176,38 @@ public class AccountController : Controller
         return View();
     }
 
+    [Authorize]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = GetCurrentUserId();
+        var user = await _userService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        return View(user);
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAccount(DeleteAccountDto model)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _userService.DeleteAccountAsync(userId, model);
+
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Message;
+            var user = await _userService.GetUserByIdAsync(userId);
+            return View(user);
+        }
+
+        await HttpContext.SignOutAsync("Identity.Application");
+        return RedirectToAction("Index", "Home");
+    }
+
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

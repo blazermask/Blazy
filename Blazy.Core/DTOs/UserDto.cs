@@ -25,4 +25,11 @@ public class UserDto
     public int SubscriberCount { get; set; }
     public bool IsCurrentUser { get; set; }
     public bool IsSubscribed { get; set; }
+    public bool IsBanned { get; set; }
+    public bool IsPermanentlyBanned { get; set; }
+    public string? BanReason { get; set; }
+    public DateTime? BanUntilDate { get; set; }
+    public int? BannedByAdminId { get; set; }
+    public string? BannedByAdminUsername { get; set; }
+    public bool IsAdmin { get; set; }
 }

@@ -93,4 +93,22 @@ public interface IPostService
     /// Deletes a post
     /// </summary>
     Task<(bool Success, string Message)> DeletePostAsync(int postId, int userId, bool isAdmin);
+
+    /// <summary>
+    /// Gets deleted posts for a specific user
+    /// </summary>
+    Task<IEnumerable<PostDto>> GetDeletedPostsByUserAsync(int userId, int? currentUserId = null);
+
+    /// <summary>
+    /// Gets all posts with pagination (including deleted ones for admin)
+    /// </summary>
+    Task<(IEnumerable<PostDto> Posts, int TotalCount)> GetAllPostsAsync(
+        int pageIndex,
+        int pageSize,
+        int? currentUserId = null);
+
+    /// <summary>
+    /// User deletes their own post
+    /// </summary>
+    Task<(bool Success, string Message)> DeletePostByUserAsync(int postId, int userId);
 }

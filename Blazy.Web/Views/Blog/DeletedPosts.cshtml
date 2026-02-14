@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "Deleted Posts";
+    var user = ViewBag.User as Blazy.Core.DTOs.UserDto;
+    var deletedPosts = ViewBag.DeletedPosts as IEnumerable<Blazy.Core.DTOs.PostDto>;
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Deleted Posts</h1>
+        <a asp-action="Index" asp-route-username="@user?.Username" class="btn btn-secondary">Back to Profile</a>
+    </div>
+    
+    @if (user != null)
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">@user.Username's Deleted Posts</h5>
+                <p class="text-muted">These posts have been deleted and are no longer publicly visible.</p>
+            </div>
+        </div>
+    }
+    
+    @if (deletedPosts != null && deletedPosts.Any())
+    {
+        <div class="row">
+            @foreach (var post in deletedPosts)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                            <span>Post #@post.DeletionNumber</span>
+                            <small class="text-white">Deleted on @post.DeletedAt?.ToString("yyyy-MM-dd HH:mm")</small>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@post.Title</h5>
+                            <p class="card-text text-muted">@(post.Content.Length > 200 ? post.Content.Substring(0, 200) + "..." : post.Content)</p>
+                            
+                            @if (!string.IsNullOrEmpty(post.DeletionReason))
+                            {
+                                <div class="alert alert-warning mb-3">
+                                    <strong>Deletion Reason:</strong> @post.DeletionReason
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(post.DeletedByAdminUsername))
+                            {
+                                <p class="text-muted">
+                                    <small>Deleted by: @post.DeletedByAdminUsername</small>
+                                </p>
+                            }
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-secondary">Likes: @post.LikeCount</span>
+                                    <span class="badge bg-secondary">Comments: @post.CommentCount</span>
+                                </div>
+                            </div>
+                            
+                            @if (post.Tags.Any())
+                            {
+                                <div class="mt-3">
+                                    @foreach (var tag in post.Tags)
+                                    {
+                                        <span class="badge bg-light text-dark me-1">@tag</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No deleted posts found.
+        </div>
+    }
+</div>

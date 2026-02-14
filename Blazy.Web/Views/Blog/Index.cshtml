@@ -16,57 +16,72 @@
     <div class="blog-user-info">
         <h1>@user?.Username's Blog</h1>
         
-        @if (!string.IsNullOrEmpty(user?.Pronouns))
+        @if (user?.IsBanned == true)
         {
-            <p class="pronouns">@user.Pronouns</p>
-        }
-        
-        @if (!string.IsNullOrEmpty(user?.FirstName) || !string.IsNullOrEmpty(user?.LastName))
-        {
-            <p class="full-name">@user.FirstName @user.LastName</p>
-        }
-        
-        @if (!string.IsNullOrEmpty(user?.Bio))
-        {
-            <div class="bio">@Html.Raw(user.Bio)</div>
-        }
-
-        @if (user?.Tags.Any() == true)
-        {
-            <div class="tags">
-                @foreach (var tag in user.Tags)
+            <div class="alert alert-warning mb-3">
+                <strong>Banned User</strong>
+                <p>This user has been banned.</p>
+                <p><strong>Reason:</strong> @user.BanReason</p>
+                @if (!user.IsPermanentlyBanned && user.BanUntilDate.HasValue)
                 {
-                    <span class="tag">#@tag</span>
+                    <p><strong>Ban expires:</strong> @user.BanUntilDate.Value.ToString("yyyy-MM-dd HH:mm")</p>
                 }
             </div>
         }
-
-        <div class="blog-stats">
-            <span>★ @user?.PostCount Posts</span>
-            <span>♥ @user?.SubscriberCount Subscribers</span>
-            <span>✓ Member since @user?.CreatedAt.ToString("MMMM yyyy")</span>
-        </div>
-
-        @if (User.Identity?.IsAuthenticated == true && !user?.IsCurrentUser == true)
+        else
         {
-            <div class="blog-actions">
-                @if (user?.IsSubscribed == true)
-                {
-                    <form asp-action="Unsubscribe" method="post" class="inline-form">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="userId" value="@user.Id" />
-                        <button type="submit" class="btn">✓ Unsubscribe</button>
-                    </form>
-                }
-                else
-                {
-                    <form asp-action="Subscribe" method="post" class="inline-form">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="userId" value="@user.Id" />
-                        <button type="submit" class="btn">★ Subscribe</button>
-                    </form>
-                }
+            @if (!string.IsNullOrEmpty(user?.Pronouns))
+            {
+                <p class="pronouns">@user.Pronouns</p>
+            }
+            
+            @if (!string.IsNullOrEmpty(user?.FirstName) || !string.IsNullOrEmpty(user?.LastName))
+            {
+                <p class="full-name">@user.FirstName @user.LastName</p>
+            }
+            
+            @if (!string.IsNullOrEmpty(user?.Bio))
+            {
+                <div class="bio">@Html.Raw(user.Bio)</div>
+            }
+
+            @if (user?.Tags.Any() == true)
+            {
+                <div class="tags">
+                    @foreach (var tag in user.Tags)
+                    {
+                        <span class="tag">#@tag</span>
+                    }
+                </div>
+            }
+
+            <div class="blog-stats">
+                <span>★ @user?.PostCount Posts</span>
+                <span>♥ @user?.SubscriberCount Subscribers</span>
+                <span>✓ Member since @user?.CreatedAt.ToString("MMMM yyyy")</span>
             </div>
+
+            @if (User.Identity?.IsAuthenticated == true && !user?.IsCurrentUser == true)
+            {
+                <div class="blog-actions">
+                    @if (user?.IsSubscribed == true)
+                    {
+                        <form asp-action="Unsubscribe" method="post" class="inline-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <button type="submit" class="btn">✓ Unsubscribe</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Subscribe" method="post" class="inline-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="userId" value="@user.Id" />
+                            <button type="submit" class="btn">★ Subscribe</button>
+                        </form>
+                    }
+                </div>
+            }
         }
     </div>
 
@@ -87,75 +102,115 @@
 </div>
 
 <div class="blog-content profile-custom" style="@GetUserContentStyle(user)">
-    <div class="posts-container">
-        @if (Model != null && Model.Any())
-        {
-            @foreach (var post in Model)
-            {
-                <div class="post-card">
-                    <div class="post-header">
-                        <h3>@post.Title</h3>
-                        <span class="post-meta">@post.CreatedAt.ToString("MMM dd, yyyy @ HH:mm")</span>
-                    </div>
-                    
-                    @if (!string.IsNullOrEmpty(post.ImageUrl))
+    <!-- Tabs -->
+    @if (user?.IsBanned != true)
+    {
+        <div class="tabs mb-4">
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#posts">Posts</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#deleted-posts">Deleted Posts</a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="tab-content">
+            <!-- Posts Tab -->
+            <div class="tab-pane fade show active" id="posts">
+                <div class="posts-container">
+                    @if (Model != null && Model.Any())
                     {
-                        <div class="post-image">
-                            <img src="@post.ImageUrl" alt="Post image" />
-                        </div>
-                    }
-                    
-                    <div class="post-content">
-                        @Html.Raw(post.Content)
-                    </div>
+                        @foreach (var post in Model)
+                        {
+                            <div class="post-card">
+                                <div class="post-header">
+                                    <h3>@post.Title</h3>
+                                    <span class="post-meta">@post.CreatedAt.ToString("MMM dd, yyyy @ HH:mm")</span>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(post.ImageUrl))
+                                {
+                                    <div class="post-image">
+                                        <img src="@post.ImageUrl" alt="Post image" />
+                                    </div>
+                                }
+                                
+                                <div class="post-content">
+                                    @Html.Raw(post.Content)
+                                </div>
 
-                    @if (!string.IsNullOrEmpty(post.MusicUrl))
-                    {
-                        <div class="post-music">
-                            <audio controls src="@post.MusicUrl">Your browser does not support the audio element.</audio>
-                        </div>
-                    }
+                                @if (!string.IsNullOrEmpty(post.MusicUrl))
+                                {
+                                    <div class="post-music">
+                                        <audio controls src="@post.MusicUrl">Your browser does not support the audio element.</audio>
+                                    </div>
+                                }
 
-                    @if (post.Tags.Any())
-                    {
-                        <div class="post-tags">
-                            @foreach (var tag in post.Tags)
+                                @if (post.Tags.Any())
+                                {
+                                    <div class="post-tags">
+                                        @foreach (var tag in post.Tags)
+                                        {
+                                            <span class="tag">#@tag</span>
+                                        }
+                                    </div>
+                                }
+
+                                <div class="post-actions">
+                                    <a asp-controller="Post" asp-action="Index" asp-route-id="@post.Id" class="btn">Read More ✧</a>
+                                    <span class="likes">♥ @post.LikeCount</span>
+                                    <span class="dislikes">✖ @post.DislikeCount</span>
+                                    <span class="comments">💬 @post.CommentCount</span>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="pagination">
+                            @if (ViewBag.CurrentPage > 1)
                             {
-                                <span class="tag">#@tag</span>
+                                <a asp-action="Index" asp-route-username="@user?.Username" asp-route-page="@(ViewBag.CurrentPage - 1)" class="btn">« Previous</a>
+                            }
+                            
+                            <span>Page @ViewBag.CurrentPage of @ViewBag.PageCount</span>
+                            
+                            @if (ViewBag.CurrentPage < ViewBag.PageCount)
+                            {
+                                <a asp-action="Index" asp-route-username="@user?.Username" asp-route-page="@(ViewBag.CurrentPage + 1)" class="btn">Next »</a>
                             }
                         </div>
                     }
-
-                    <div class="post-actions">
-                        <a asp-controller="Post" asp-action="Index" asp-route-id="@post.Id" class="btn">Read More ✧</a>
-                        <span class="likes">♥ @post.LikeCount</span>
-                        <span class="dislikes">✖ @post.DislikeCount</span>
-                        <span class="comments">💬 @post.CommentCount</span>
+                    else
+                    {
+                        <div class="empty-state">
+                            <p>♡ No posts yet! ♡</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Deleted Posts Tab -->
+            <div class="tab-pane fade" id="deleted-posts">
+                <div class="posts-container">
+                    <div class="alert alert-info">
+                        <a asp-action="DeletedPosts" asp-route-username="@user?.Username" class="btn btn-primary">View All Deleted Posts</a>
+                    </div>
+                    <div class="empty-state">
+                        <p>Deleted posts are only visible here.</p>
                     </div>
                 </div>
-            }
-
-            <div class="pagination">
-                @if (ViewBag.CurrentPage > 1)
-                {
-                    <a asp-action="Index" asp-route-username="@user?.Username" asp-route-page="@(ViewBag.CurrentPage - 1)" class="btn">« Previous</a>
-                }
-                
-                <span>Page @ViewBag.CurrentPage of @ViewBag.PageCount</span>
-                
-                @if (ViewBag.CurrentPage < ViewBag.PageCount)
-                {
-                    <a asp-action="Index" asp-route-username="@user?.Username" asp-route-page="@(ViewBag.CurrentPage + 1)" class="btn">Next »</a>
-                }
             </div>
-        }
-        else
-        {
+        </div>
+    }
+    else
+    {
+        <div class="posts-container">
             <div class="empty-state">
-                <p>♡ No posts yet! ♡</p>
+                <p>This user is banned and cannot post or comment.</p>
             </div>
-        }
-    </div>
+        </div>
+    }
 </div>
 
 @functions {

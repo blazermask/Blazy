@@ -132,7 +132,7 @@ public class PostController : Controller
         var userId = GetCurrentUserId();
         var isAdmin = await _userService.IsAdminAsync(userId);
         
-        var result = await _postService.DeletePostAsync(id, userId, isAdmin);
+        var result = await _postService.DeletePostByUserAsync(id, userId);
 
         if (!result.Success)
         {
@@ -141,6 +141,22 @@ public class PostController : Controller
         }
 
         return RedirectToAction("Index", "Home");
+    }
+
+    [Authorize]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteComment(int id, int postId)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _commentService.DeleteCommentByUserAsync(id, userId);
+
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Message;
+        }
+
+        return RedirectToAction(nameof(Index), new { id = postId });
     }
 
     private int GetCurrentUserId()

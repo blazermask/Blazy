@@ -41,11 +41,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // Register UserManager and RoleManager
 builder.Services.AddScoped<UserManager<Blazy.Core.Entities.User>>();
