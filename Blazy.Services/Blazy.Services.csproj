@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Blazy.Core\Blazy.Core.csproj" />
+    <ProjectReference Include="..\Blazy.Data\Blazy.Data.csproj" />
+    <ProjectReference Include="..\Blazy.Repository\Blazy.Repository.csproj" />
+  </ItemGroup>
+
+</Project>

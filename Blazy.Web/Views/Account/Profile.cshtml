@@ -1,0 +1,61 @@
+@model Blazy.Core.DTOs.UserDto
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="profile-header">
+    <h2>✧ My Profile ✧</h2>
+    <a asp-action="Edit" class="btn">Edit Profile</a>
+</div>
+
+<div class="profile-container">
+    <div class="profile-card">
+        @if (!string.IsNullOrEmpty(Model.BannerUrl))
+        {
+            <div class="profile-banner">
+                <img src="@Model.BannerUrl" alt="Banner" />
+            </div>
+        }
+        
+        <div class="profile-info">
+            <h3>@Model.Username</h3>
+            
+            @if (!string.IsNullOrEmpty(Model.Pronouns))
+            {
+                <p class="pronouns">@Model.Pronouns</p>
+            }
+            
+            @if (!string.IsNullOrEmpty(Model.FirstName) || !string.IsNullOrEmpty(Model.LastName))
+            {
+                <p class="full-name">@Model.FirstName @Model.LastName</p>
+            }
+            
+            @if (!string.IsNullOrEmpty(Model.Bio))
+            {
+                <div class="bio">@Html.Raw(Model.Bio)</div>
+            }
+            
+            <div class="stats">
+                <p><strong>Posts:</strong> @Model.PostCount</p>
+                <p><strong>Subscribers:</strong> @Model.SubscriberCount</p>
+                <p><strong>Member Since:</strong> @Model.CreatedAt.ToString("MMMM yyyy")</p>
+            </div>
+
+            @if (Model.Tags.Any())
+            {
+                <div class="tags">
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <span class="tag">#@tag</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="recent-posts">
+        <h3>Recent Posts</h3>
+        <p>View your posts on your public profile: <a asp-controller="Blog" asp-action="Index" asp-route-username="@Model.Username">@Model.Username</a></p>
+    </div>
+</div>

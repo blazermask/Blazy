@@ -1,0 +1,97 @@
+@model IEnumerable<Blazy.Core.DTOs.PostDto>
+
+@{
+    ViewData["Title"] = "Home";
+    var currentTab = ViewBag.CurrentTab as string ?? "new";
+}
+
+<div class="page-header">
+    <h2>✧ Welcome to Blazy! ✧</h2>
+    <p class="subtitle">Where nostalgia meets social blogging ♡</p>
+</div>
+
+<div class="tabs">
+    <a asp-action="Index" asp-route-tab="new" class="tab @(currentTab == "new" ? "active" : "")">★ New</a>
+    <a asp-action="Index" asp-route-tab="loved" class="tab @(currentTab == "loved" ? "active" : "")">♥ Loved</a>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a asp-action="Index" asp-route-tab="subscribed" class="tab @(currentTab == "subscribed" ? "active" : "")">✓ Subscribed</a>
+    }
+</div>
+
+<div class="posts-container">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var post in Model)
+        {
+            <div class="post-card">
+                <div class="post-header">
+                    <h3>@post.Title</h3>
+                    <span class="post-meta">
+                        by <a asp-controller="Blog" asp-action="Index" asp-route-username="@post.Username">@post.Username</a>
+                        • @post.CreatedAt.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(post.ImageUrl))
+                {
+                    <div class="post-image">
+                        <img src="@post.ImageUrl" alt="Post image" />
+                    </div>
+                }
+                
+                <div class="post-content">
+                    @Html.Raw(post.Content)
+                </div>
+
+                @if (!string.IsNullOrEmpty(post.MusicUrl))
+                {
+                    <div class="post-music">
+                        <audio controls src="@post.MusicUrl">Your browser does not support the audio element.</audio>
+                    </div>
+                }
+
+                @if (post.Tags.Any())
+                {
+                    <div class="post-tags">
+                        @foreach (var tag in post.Tags)
+                        {
+                            <span class="tag">#@tag</span>
+                        }
+                    </div>
+                }
+
+                <div class="post-actions">
+                    <a asp-controller="Post" asp-action="Index" asp-route-id="@post.Id" class="btn">Read More</a>
+                    <span class="likes">♥ @post.LikeCount</span>
+                    <span class="dislikes">✖ @post.DislikeCount</span>
+                    <span class="comments">💬 @post.CommentCount</span>
+                </div>
+            </div>
+        }
+
+        <div class="pagination">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a asp-action="Index" asp-route-tab="@currentTab" asp-route-page="@(ViewBag.CurrentPage - 1)" class="btn">« Previous</a>
+            }
+            
+            <span>Page @ViewBag.CurrentPage of @ViewBag.PageCount</span>
+            
+            @if (ViewBag.CurrentPage < ViewBag.PageCount)
+            {
+                <a asp-action="Index" asp-route-tab="@currentTab" asp-route-page="@(ViewBag.CurrentPage + 1)" class="btn">Next »</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <p>♡ No posts yet! Be the first to share something ♡</p>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Post" asp-action="Create" class="btn">Create Your First Post</a>
+            }
+        </div>
+    }
+</div>

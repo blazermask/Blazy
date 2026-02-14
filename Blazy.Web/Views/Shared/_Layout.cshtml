@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Blazy</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <div class="main-container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <h1>★ Blazy ★</h1>
+                    <p class="tagline">your space, your style ✧</p>
+                </div>
+                <nav>
+                    <ul class="nav-menu">
+                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li><a asp-controller="Post" asp-action="Create">New Post</a></li>
+                            <li><a asp-controller="Account" asp-action="Profile">My Profile</a></li>
+                            <li><a asp-controller="Account" asp-action="Logout">Logout</a></li>
+                        }
+                        else
+                        {
+                            <li><a asp-controller="Account" asp-action="Login">Login</a></li>
+                            <li><a asp-controller="Account" asp-action="Register">Register</a></li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+            @if (!string.IsNullOrEmpty(TempData["Success"] as string))
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @if (!string.IsNullOrEmpty(TempData["Error"] as string))
+            {
+                <div class="alert alert-error">@TempData["Error"]</div>
+            }
+        </header>
+
+        <main>
+            @RenderBody()
+        </main>
+
+        <footer>
+            <p>© 2024 Blazy | Made with ♥ | <a asp-controller="Home" asp-action="About">About</a></p>
+        </footer>
+    </div>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

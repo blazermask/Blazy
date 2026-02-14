@@ -1,0 +1,132 @@
+@model Blazy.Core.DTOs.PostDto
+
+@{
+    ViewData["Title"] = Model.Title;
+    var comments = ViewBag.Comments as IEnumerable<Blazy.Core.DTOs.CommentDto> ?? Enumerable.Empty<CommentDto>();
+}
+
+<div class="post-detail">
+    <div class="post-header">
+        <h1>@Model.Title</h1>
+        <span class="post-meta">
+            by <a asp-controller="Blog" asp-action="Index" asp-route-username="@Model.Username">@Model.Username</a>
+            • @Model.CreatedAt.ToString("MMMM dd, yyyy @ HH:mm")
+        </span>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        <div class="post-image">
+            <img src="@Model.ImageUrl" alt="Post image" />
+        </div>
+    }
+    
+    <div class="post-content">
+        @Html.Raw(Model.Content)
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MusicUrl))
+    {
+        <div class="post-music">
+            <audio controls src="@Model.MusicUrl">Your browser does not support the audio element.</audio>
+        </div>
+    }
+
+    @if (Model.Tags.Any())
+    {
+        <div class="post-tags">
+            @foreach (var tag in Model.Tags)
+            {
+                <span class="tag">#@tag</span>
+            }
+        </div>
+    }
+
+    <div class="post-actions">
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            if (Model.IsLiked)
+            {
+                <form asp-action="Unlike" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn">♥ Liked</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="Like" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn">♡ Like</button>
+                </form>
+            }
+
+            if (Model.IsDisliked)
+            {
+                <form asp-action="Undislike" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn">✖ Disliked</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="Dislike" method="post" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <button type="submit" class="btn">✖ Dislike</button>
+                </form>
+            }
+        }
+        
+        <span class="stats">
+            ♥ @Model.LikeCount Likes • ✖ @Model.DislikeCount Dislikes • 💬 @Model.CommentCount Comments
+        </span>
+
+        <a asp-controller="Blog" asp-action="Index" asp-route-username="@Model.Username" class="btn">← Back to @Model.Username's Blog</a>
+    </div>
+</div>
+
+<div class="comments-section">
+    <h3>Comments ✧</h3>
+    
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <form asp-action="Comment" method="post" class="comment-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="form-group">
+                <label for="Content">Add a comment:</label>
+                <textarea id="Content" name="Content" rows="3" required placeholder="Write something nice... ♡"></textarea>
+            </div>
+            <button type="submit" class="btn">Post Comment</button>
+        </form>
+    }
+    else
+    {
+        <p><a asp-controller="Account" asp-action="Login">Login</a> to leave a comment!</p>
+    }
+
+    <div class="comments-list">
+        @if (comments.Any())
+        {
+            @foreach (var comment in comments)
+            {
+                <div class="comment">
+                    <div class="comment-header">
+                        <strong><a asp-controller="Blog" asp-action="Index" asp-route-username="@comment.Username">@comment.Username</a></strong>
+                        <span class="comment-date">@comment.CreatedAt.ToString("MMM dd, yyyy @ HH:mm")</span>
+                    </div>
+                    <div class="comment-content">
+                        @Html.Raw(comment.Content)
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="no-comments">No comments yet. Be the first to comment! ♡</p>
+        }
+    </div>
+</div>

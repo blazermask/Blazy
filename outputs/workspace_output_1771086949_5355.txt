@@ -1,0 +1,86 @@
+[main (root-commit) fd52f4b] Initial commit: Complete Blazy social media blog platform
+ Committer: root <root@172.16.241.243>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 72 files changed, 6832 insertions(+)
+ create mode 100755 .agent_hooks/run_all_hooks.py
+ create mode 100755 .agent_hooks/shutdown/00_track_processes_on_ports.py
+ create mode 100644 .agent_hooks/shutdown/_readme.txt
+ create mode 100644 .agent_hooks/startup/_readme.txt
+ create mode 100644 Blazy.Core/Blazy.Core.csproj
+ create mode 100644 Blazy.Core/DTOs/CommentDto.cs
+ create mode 100644 Blazy.Core/DTOs/CreateCommentDto.cs
+ create mode 100644 Blazy.Core/DTOs/CreatePostDto.cs
+ create mode 100644 Blazy.Core/DTOs/LoginDto.cs
+ create mode 100644 Blazy.Core/DTOs/PostDto.cs
+ create mode 100644 Blazy.Core/DTOs/RegisterDto.cs
+ create mode 100644 Blazy.Core/DTOs/UserDto.cs
+ create mode 100644 Blazy.Core/Entities/Comment.cs
+ create mode 100644 Blazy.Core/Entities/Dislike.cs
+ create mode 100644 Blazy.Core/Entities/Like.cs
+ create mode 100644 Blazy.Core/Entities/Post.cs
+ create mode 100644 Blazy.Core/Entities/PostTag.cs
+ create mode 100644 Blazy.Core/Entities/Subscription.cs
+ create mode 100644 Blazy.Core/Entities/Tag.cs
+ create mode 100644 Blazy.Core/Entities/User.cs
+ create mode 100644 Blazy.Core/Entities/UserTag.cs
+ create mode 100644 Blazy.Data/Blazy.Data.csproj
+ create mode 100644 Blazy.Data/BlazyDbContext.cs
+ create mode 100644 Blazy.Data/DataInitializer.cs
+ create mode 100644 Blazy.Repository/Blazy.Repository.csproj
+ create mode 100644 Blazy.Repository/Interfaces/IPostRepository.cs
+ create mode 100644 Blazy.Repository/Interfaces/IRepository.cs
+ create mode 100644 Blazy.Repository/Interfaces/IUserRepository.cs
+ create mode 100644 Blazy.Repository/Repositories/PostRepository.cs
+ create mode 100644 Blazy.Repository/Repositories/Repository.cs
+ create mode 100644 Blazy.Repository/Repositories/UserRepository.cs
+ create mode 100644 Blazy.Services/Blazy.Services.csproj
+ create mode 100644 Blazy.Services/Interfaces/ICommentService.cs
+ create mode 100644 Blazy.Services/Interfaces/IPostService.cs
+ create mode 100644 Blazy.Services/Interfaces/IUserService.cs
+ create mode 100644 Blazy.Services/Services/CommentService.cs
+ create mode 100644 Blazy.Services/Services/PostService.cs
+ create mode 100644 Blazy.Services/Services/UserService.cs
+ create mode 100644 Blazy.Tests/Blazy.Tests.csproj
+ create mode 100644 Blazy.Tests/Services/UserServiceTests.cs
+ create mode 100644 Blazy.Web/Blazy.Web.csproj
+ create mode 100644 Blazy.Web/Controllers/AccountController.cs
+ create mode 100644 Blazy.Web/Controllers/BlogController.cs
+ create mode 100644 Blazy.Web/Controllers/HomeController.cs
+ create mode 100644 Blazy.Web/Controllers/PostController.cs
+ create mode 100644 Blazy.Web/Program.cs
+ create mode 100644 Blazy.Web/Views/Account/Edit.cshtml
+ create mode 100644 Blazy.Web/Views/Account/Login.cshtml
+ create mode 100644 Blazy.Web/Views/Account/Profile.cshtml
+ create mode 100644 Blazy.Web/Views/Account/Register.cshtml
+ create mode 100644 Blazy.Web/Views/Blog/Index.cshtml
+ create mode 100644 Blazy.Web/Views/Home/About.cshtml
+ create mode 100644 Blazy.Web/Views/Home/Index.cshtml
+ create mode 100644 Blazy.Web/Views/Post/Create.cshtml
+ create mode 100644 Blazy.Web/Views/Post/Index.cshtml
+ create mode 100644 Blazy.Web/Views/Shared/_Layout.cshtml
+ create mode 100644 Blazy.Web/Views/_ViewImports.cshtml
+ create mode 100644 Blazy.Web/Views/_ViewStart.cshtml
+ create mode 100644 Blazy.Web/appsettings.json
+ create mode 100644 Blazy.Web/wwwroot/css/site.css
+ create mode 100644 Blazy.sln
+ create mode 100644 README.md
+ create mode 100644 outputs/workspace_output_1771084840_7842.txt
+ create mode 100644 outputs/workspace_output_1771086885_7104.txt
+ create mode 100644 outputs/workspace_output_1771086889_3576.txt
+ create mode 100644 outputs/workspace_output_1771086898_8782.txt
+ create mode 100644 outputs/workspace_output_1771086908_2887.txt
+ create mode 100644 outputs/workspace_output_1771086921_933.txt
+ create mode 100644 outputs/workspace_output_1771086925_7084.txt
+ create mode 100644 outputs/workspace_output_1771086930_9812.txt
+ create mode 100644 outputs/workspace_output_1771086941_1921.txt
+ create mode 100644 todo.md

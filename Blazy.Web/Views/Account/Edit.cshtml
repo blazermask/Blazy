@@ -1,0 +1,114 @@
+@model Blazy.Core.DTOs.UserDto
+
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<div class="page-header">
+    <h2>✧ Customize Your Profile ✧</h2>
+    <p class="subtitle">Make your Blazy profile uniquely yours! ♡</p>
+</div>
+
+<div class="edit-profile-container">
+    <form asp-action="Edit" method="post" class="edit-form">
+        @Html.AntiForgeryToken()
+        
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-error">
+                @Html.ValidationSummary(false)
+            </div>
+        }
+
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="Username" />
+        <input type="hidden" asp-for="Email" />
+        <input type="hidden" asp-for="CreatedAt" />
+
+        <div class="form-section">
+            <h3>Basic Information</h3>
+            <div class="form-group">
+                <label for="FirstName">First Name:</label>
+                <input type="text" id="FirstName" name="FirstName" value="@Model.FirstName" />
+            </div>
+
+            <div class="form-group">
+                <label for="LastName">Last Name:</label>
+                <input type="text" id="LastName" name="LastName" value="@Model.LastName" />
+            </div>
+
+            <div class="form-group">
+                <label for="Pronouns">Pronouns:</label>
+                <input type="text" id="Pronouns" name="Pronouns" value="@Model.Pronouns" placeholder="e.g., she/her, he/him, they/them" />
+            </div>
+
+            <div class="form-group">
+                <label for="Bio">Bio:</label>
+                <textarea id="Bio" name="Bio" rows="4">@Model.Bio</textarea>
+                <small>Supports HTML! Use &lt;br&gt; for line breaks.</small>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Visual Customization</h3>
+            <div class="form-group">
+                <label for="BannerUrl">Banner Image URL:</label>
+                <input type="url" id="BannerUrl" name="BannerUrl" value="@Model.BannerUrl" placeholder="https://example.com/banner.jpg" />
+            </div>
+
+            <div class="form-group">
+                <label for="BackgroundUrl">Background Image URL:</label>
+                <input type="url" id="BackgroundUrl" name="BackgroundUrl" value="@Model.BackgroundUrl" placeholder="https://example.com/bg.jpg" />
+            </div>
+
+            <div class="form-group">
+                <label for="CustomFont">Custom Font:</label>
+                <input type="text" id="CustomFont" name="CustomFont" value="@Model.CustomFont" placeholder="Comic Sans MS, cursive" />
+                <small>Use web-safe fonts or Google Fonts names</small>
+            </div>
+
+            <div class="form-group">
+                <label for="AccentColor">Accent Color:</label>
+                <input type="color" id="AccentColor" name="AccentColor" value="@Model.AccentColor ?? "#FF69B4"" />
+                <small>Choose your signature color!</small>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Media</h3>
+            <div class="form-group">
+                <label for="MusicUrl">Background Music URL:</label>
+                <input type="url" id="MusicUrl" name="MusicUrl" value="@Model.MusicUrl" placeholder="https://example.com/music.mp3" />
+                <small>Add a tune that plays on your profile!</small>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Advanced Customization</h3>
+            <div class="form-group">
+                <label for="CustomHtml">Custom HTML Content:</label>
+                <textarea id="CustomHtml" name="CustomHtml" rows="10">@Model.CustomHtml</textarea>
+                <small>Add custom HTML to your profile page. Be creative! ♡</small>
+            </div>
+
+            <div class="form-group">
+                <label for="CustomCss">Custom CSS:</label>
+                <textarea id="CustomCss" name="CustomCss" rows="10">@Model.CustomCss</textarea>
+                <small>Add custom CSS for additional styling. Use .profile-custom class.</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes ✧</button>
+            <a asp-action="Profile" class="btn">Cancel</a>
+        </div>
+    </form>
+
+    <div class="preview-section">
+        <h3>Profile Preview</h3>
+        <div class="preview-box">
+            <p>Your profile will look something like this after saving!</p>
+            <small>Some features may differ on your actual profile.</small>
+        </div>
+    </div>
+</div>
