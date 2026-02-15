@@ -41,7 +41,7 @@ public static class DataInitializer
                 LastName = "User",
                 Pronouns = "they/them",
                 Bio = "Welcome to Blazy! I'm the admin and I'm here to help you customize your profile and connect with others. Feel free to reach out! ♡",
-                CustomFont = "Comic Sans MS, cursive",
+                CustomFont = "'Courier New', monospace",
                 AccentColor = "#FF69B4",
                 CreatedAt = DateTime.UtcNow
             };

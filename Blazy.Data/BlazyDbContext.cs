@@ -28,6 +28,7 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
     public DbSet<Report> Reports { get; set; }
     public DbSet<RegistrationRecord> RegistrationRecords { get; set; }
+    public DbSet<LoginAttempt> LoginAttempts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -210,6 +211,13 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
             entity.HasIndex(e => new { e.ReporterId, e.ContentType, e.TargetPostId }).IsUnique().HasFilter("TargetPostId IS NOT NULL");
             entity.HasIndex(e => new { e.ReporterId, e.ContentType, e.TargetCommentId }).IsUnique().HasFilter("TargetCommentId IS NOT NULL");
             entity.HasIndex(e => new { e.ReporterId, e.ContentType, e.TargetUserId }).IsUnique().HasFilter("TargetUserId IS NOT NULL");
+        });
+
+        // Configure LoginAttempt entity
+        modelBuilder.Entity<LoginAttempt>(entity =>
+        {
+            entity.HasIndex(e => e.IpAddress);
+            entity.HasIndex(e => new { e.IpAddress, e.AttemptedAt });
         });
     }
 }
