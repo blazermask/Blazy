@@ -27,6 +27,7 @@ public class BlazyDbContext : IdentityDbContext<User, IdentityRole<int>, int>
     public DbSet<UserTag> UserTags { get; set; }
     public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
     public DbSet<Report> Reports { get; set; }
+    public DbSet<RegistrationRecord> RegistrationRecords { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
