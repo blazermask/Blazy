@@ -266,6 +266,15 @@ public class AdminService : Interfaces.IAdminService
         // Delete all posts by the user
         await _postRepository.DeletePostsByUserAsync(userId);
 
+        // Delete all comments by the user
+        var userComments = await _postRepository.GetCommentsByUserAsync(userId);
+        foreach (var comment in userComments)
+        {
+            comment.IsDeleted = true;
+            comment.UpdatedAt = DateTime.UtcNow;
+        }
+        await _postRepository.SaveChangesAsync();
+
         // Mark user as deleted
         user.IsDeleted = true;
         user.DeletedUsername = user.UserName;
@@ -378,5 +387,39 @@ public class AdminService : Interfaces.IAdminService
 
         // The original admin is the one with username "admin"
         return user.UserName?.ToLower() == "admin";
+    }
+
+    public async Task<(bool Success, string Message)> ResetUserPasswordAsync(int adminId, int targetUserId, string newPassword)
+    {
+        var targetUser = await _userRepository.GetByIdAsync(targetUserId);
+        if (targetUser == null)
+        {
+            return (false, "User not found.");
+        }
+
+        // Admins cannot reset other admins' passwords - they must use Change Password for their own account
+        var isTargetAdmin = await _userManager.IsInRoleAsync(targetUser, "Admin");
+        if (isTargetAdmin)
+        {
+            return (false, "Cannot reset an admin's password. Admins must use the Change Password feature for their own account.");
+        }
+
+        // Reset the password using UserManager
+        var token = await _userManager.GeneratePasswordResetTokenAsync(targetUser);
+        var result = await _userManager.ResetPasswordAsync(targetUser, token, newPassword);
+
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return (false, $"Failed to reset password: {errors}");
+        }
+
+        targetUser.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(targetUser);
+
+        // Create audit log
+        await CreateAuditLogAsync(adminId, "ResetUserPassword", null, targetUserId, $"Password reset for user {targetUser.UserName}");
+
+        return (true, $"Password for {targetUser.UserName} has been reset successfully.");
     }
 }

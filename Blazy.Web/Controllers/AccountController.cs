@@ -92,7 +92,8 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var result = await _userService.RegisterAsync(model);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var result = await _userService.RegisterAsync(model, ipAddress);
         if (result.Success)
         {
             // Auto-login after registration with role claims
@@ -200,6 +201,35 @@ public class AccountController : Controller
     public IActionResult AccessDenied()
     {
         return View();
+    }
+
+    [Authorize]
+    public IActionResult ChangePassword()
+    {
+        return View();
+    }
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(Blazy.Core.DTOs.ChangePasswordDto model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var userId = GetCurrentUserId();
+        var result = await _userService.ChangePasswordAsync(userId, model);
+
+        if (result.Success)
+        {
+            TempData["Success"] = result.Message;
+            return RedirectToAction(nameof(Profile));
+        }
+
+        ModelState.AddModelError("", result.Message);
+        return View(model);
     }
 
     [Authorize]

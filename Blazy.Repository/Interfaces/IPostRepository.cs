@@ -74,4 +74,14 @@ public interface IPostRepository : IRepository<Post>
     /// Deletes all posts by a specific user
     /// </summary>
     Task DeletePostsByUserAsync(int userId);
+
+    /// <summary>
+    /// Gets all comments by a specific user
+    /// </summary>
+    Task<IEnumerable<Blazy.Core.Entities.Comment>> GetCommentsByUserAsync(int userId);
+
+    /// <summary>
+    /// Saves all pending changes to the database
+    /// </summary>
+    Task SaveChangesAsync();
 }

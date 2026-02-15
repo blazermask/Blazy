@@ -2,6 +2,7 @@ using Blazy.Core.DTOs;
 using Blazy.Core.Entities;
 using Blazy.Repository.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blazy.Services.Services;
 
@@ -13,16 +14,31 @@ public class UserService : Interfaces.IUserService
     private readonly IUserRepository _userRepository;
     private readonly UserManager<User> _userManager;
     private readonly Blazy.Repository.Interfaces.IPostRepository _postRepository;
+    private readonly Blazy.Data.BlazyDbContext _context;
 
-    public UserService(IUserRepository userRepository, UserManager<User> userManager, Blazy.Repository.Interfaces.IPostRepository postRepository)
+    public UserService(IUserRepository userRepository, UserManager<User> userManager, Blazy.Repository.Interfaces.IPostRepository postRepository, Blazy.Data.BlazyDbContext context)
     {
         _userRepository = userRepository;
         _userManager = userManager;
+        _context = context;
         _postRepository = postRepository;
     }
 
-    public async Task<(bool Success, string Message, UserDto? User)> RegisterAsync(RegisterDto model)
+    public async Task<(bool Success, string Message, UserDto? User)> RegisterAsync(RegisterDto model, string? ipAddress = null)
     {
+        // Check IP-based registration limit (2 accounts per day)
+        if (!string.IsNullOrEmpty(ipAddress))
+        {
+            var oneDayAgo = DateTime.UtcNow.AddDays(-1);
+            var recentRegistrations = await _context.RegistrationRecords
+                .CountAsync(r => r.IpAddress == ipAddress && r.CreatedAt >= oneDayAgo);
+
+            if (recentRegistrations >= 2)
+            {
+                return (false, "Registration limit reached. You can only create 2 accounts per day. Please try again later.", null);
+            }
+        }
+
         // Check if username already exists or was used by a deleted account
         if (!await IsUsernameAvailableAsync(model.Username))
         {
@@ -57,6 +73,17 @@ public class UserService : Interfaces.IUserService
         // Add to User role
         await _userManager.AddToRoleAsync(user, "User");
 
+        // Record the registration for IP-based rate limiting
+        if (!string.IsNullOrEmpty(ipAddress))
+        {
+            _context.RegistrationRecords.Add(new RegistrationRecord
+            {
+                IpAddress = ipAddress,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+        }
+
         var userDto = await MapToUserDto(user, user.Id);
         return (true, "Registration successful!", userDto);
     }
@@ -74,11 +101,42 @@ public class UserService : Interfaces.IUserService
             return (false, "Invalid username or password.", null);
         }
 
+        // Check if the user is currently locked out
+        if (await _userManager.IsLockedOutAsync(user))
+        {
+            var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
+            if (lockoutEnd.HasValue)
+            {
+                var remainingMinutes = Math.Ceiling((lockoutEnd.Value - DateTimeOffset.UtcNow).TotalMinutes);
+                return (false, $"Account is locked due to too many failed login attempts. Please try again in {remainingMinutes} minute(s).", null);
+            }
+            return (false, "Account is temporarily locked. Please try again later.", null);
+        }
+
         var result = await _userManager.CheckPasswordAsync(user, model.Password);
         if (!result)
         {
+            // Increment failed access count
+            await _userManager.AccessFailedAsync(user);
+
+            // Check if this failure caused a lockout
+            if (await _userManager.IsLockedOutAsync(user))
+            {
+                return (false, "Account is now locked due to too many failed login attempts. Please try again in 5 minutes.", null);
+            }
+
+            var failedCount = await _userManager.GetAccessFailedCountAsync(user);
+            var attemptsRemaining = 3 - failedCount;
+            if (attemptsRemaining > 0)
+            {
+                return (false, $"Invalid username or password. {attemptsRemaining} attempt(s) remaining before lockout.", null);
+            }
+
             return (false, "Invalid username or password.", null);
         }
+
+        // Reset failed access count on successful login
+        await _userManager.ResetAccessFailedCountAsync(user);
 
         var userDto = await MapToUserDto(user, user.Id);
         return (true, "Login successful!", userDto);
@@ -345,6 +403,15 @@ public class UserService : Interfaces.IUserService
         // Delete all posts by the user
         await _postRepository.DeletePostsByUserAsync(userId);
 
+        // Delete all comments by the user
+        var userComments = await _postRepository.GetCommentsByUserAsync(userId);
+        foreach (var comment in userComments)
+        {
+            comment.IsDeleted = true;
+            comment.UpdatedAt = DateTime.UtcNow;
+        }
+        await _postRepository.SaveChangesAsync();
+
         // Store the original username to prevent reuse
         var deletedUsername = user.UserName;
 
@@ -376,5 +443,34 @@ public class UserService : Interfaces.IUserService
         var deletedWithUsername = allUsers.Any(u => u.DeletedUsername == username);
         
         return !deletedWithUsername;
+    }
+
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(int userId, ChangePasswordDto model)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return (false, "User not found.");
+        }
+
+        // Verify current password
+        var passwordCheck = await _userManager.CheckPasswordAsync(user, model.CurrentPassword);
+        if (!passwordCheck)
+        {
+            return (false, "Current password is incorrect.");
+        }
+
+        // Change the password
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return (false, $"Failed to change password: {errors}");
+        }
+
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
+
+        return (true, "Password changed successfully!");
     }
 }

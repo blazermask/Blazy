@@ -1,53 +1,24 @@
-# Blazy - ASP.NET Core 8.0 Social Media Blog Application
+# Blazy Additional Features
 
-## Project Setup
-- [x] Create solution structure with 6 projects
-- [x] Set up project references and NuGet packages
-- [x] Configure GitHub repository upload
+## 1. Restrict Admin Password Reset (admins can only reset user passwords, not other admins)
+- [x] Update `AdminService.ResetUserPasswordAsync` to block resetting any admin's password
+- [x] Update the Admin Users view to hide "Reset Password" button for admin accounts
+- [x] Test the restriction - backend blocks with "Cannot reset an admin's password" ✅
 
-## Blazy.Core (Entities & DTOs)
-- [x] Create domain entities (User, Post, Comment, Subscription, Like/Dislike)
-- [x] Create DTOs for data transfer
-- [x] Define many-to-many relationships
+## 2. Login Timeout (5 minute lockout after 3 failed attempts)
+- [x] Configure ASP.NET Identity lockout settings in Program.cs (3 attempts, 5 min lockout)
+- [x] Update `UserService.LoginAsync` to use proper lockout-aware sign-in
+- [x] Update the Login view to show lockout messages
+- [x] Test lockout behavior - 3 wrong attempts → locked, even correct password blocked ✅
 
-## Blazy.Data (Data Layer)
-- [x] Create DbContext with all entities
-- [x] Configure entity relationships and constraints
-- [x] Create database initializers and seed data
-- [x] Set up Identity configuration
+## 3. Account Creation Limit (2 accounts per day)
+- [x] Create `RegistrationRecord` entity for IP-based tracking
+- [x] Update DbContext with `RegistrationRecords` DbSet
+- [x] Implement IP-based rate limiting in `UserService.RegisterAsync`
+- [x] Update `AccountController.Register` to pass IP address
+- [x] Test the limit - 2 accounts created, 3rd blocked ✅
 
-## Blazy.Repository (Data Access)
-- [x] Create generic repository interface
-- [x] Implement generic repository
-- [x] Create specific repositories for entities
-- [x] Set up Unit of Work pattern
-
-## Blazy.Services (Business Logic)
-- [x] Create service interfaces
-- [x] Implement user management service
-- [x] Implement post management service
-- [x] Implement comment management service
-- [x] Implement subscription service
-- [x] Implement like/dislike service
-- [x] Implement blog customization service
-
-## Blazy.Web (MVC Application)
-- [x] Create controllers (Home, Account, Blog, Post, Admin)
-- [x] Create views with MySpace-style HTML
-- [x] Set up Identity authentication
-- [x] Configure routing and middleware
-- [x] Create static assets (CSS, JavaScript)
-- [x] Implement user profile customization
-- [x] Create homepage with tabs (New, Loved, Subscribed)
-- [x] Add admin functionality
-
-## Blazy.Tests (Unit Tests)
-- [x] Create test projects setup
-- [x] Write repository tests
-- [x] Write service tests
-- [x] Write controller tests
-
-## GitHub Upload
-- [x] Initialize git repository
-- [x] Commit all files
-- [x] Push to GitHub repository
+## 4. Build and Test
+- [x] Build with 0 errors
+- [x] All 4 unit tests pass
+- [x] Run and verify all features

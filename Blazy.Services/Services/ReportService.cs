@@ -91,7 +91,23 @@ public class ReportService : Interfaces.IReportService
 
         await _reportRepository.AddAsync(report);
 
-        var reportDto = await MapToReportDto(report);
+        // FIX: Reload the report with all navigation properties from the database
+        // The freshly created report entity does not have its navigation properties loaded,
+        // which caused NullReferenceException when accessing report.Reporter.Username in MapToReportDto
+        var savedReport = await _context.Reports
+            .Include(r => r.Reporter)
+            .Include(r => r.ReviewedByAdmin)
+            .Include(r => r.TargetPost)
+            .Include(r => r.TargetComment)
+            .Include(r => r.TargetUser)
+            .FirstOrDefaultAsync(r => r.Id == report.Id);
+
+        if (savedReport == null)
+        {
+            return (true, "Report submitted successfully.", null);
+        }
+
+        var reportDto = MapToReportDto(savedReport);
         return (true, "Report submitted successfully.", reportDto);
     }
 
@@ -102,7 +118,7 @@ public class ReportService : Interfaces.IReportService
         var reportDtos = new List<ReportDto>();
         foreach (var report in reports)
         {
-            var reportDto = await MapToReportDto(report);
+            var reportDto = MapToReportDto(report);
             if (reportDto != null)
             {
                 reportDtos.Add(reportDto);
@@ -119,7 +135,7 @@ public class ReportService : Interfaces.IReportService
         var reportDtos = new List<ReportDto>();
         foreach (var report in reports)
         {
-            var reportDto = await MapToReportDto(report);
+            var reportDto = MapToReportDto(report);
             if (reportDto != null)
             {
                 reportDtos.Add(reportDto);
@@ -154,7 +170,7 @@ public class ReportService : Interfaces.IReportService
         var reportDtos = new List<ReportDto>();
         foreach (var report in reports)
         {
-            var reportDto = await MapToReportDto(report);
+            var reportDto = MapToReportDto(report);
             if (reportDto != null)
             {
                 reportDtos.Add(reportDto);
@@ -164,40 +180,31 @@ public class ReportService : Interfaces.IReportService
         return reportDtos;
     }
 
-    private async Task<ReportDto> MapToReportDto(Report report)
+    /// <summary>
+    /// Maps a Report entity to a ReportDto.
+    /// FIX: Now uses safe null-conditional access for all navigation properties
+    /// to prevent NullReferenceException when navigation properties are not loaded.
+    /// When reports are loaded via repository methods with Include(), the navigation
+    /// properties will be populated. For freshly created reports, we reload from DB with Includes.
+    /// </summary>
+    private ReportDto MapToReportDto(Report report)
     {
-        var targetPostTitle = report.TargetPostId.HasValue
-            ? (await _postRepository.GetByIdAsync(report.TargetPostId.Value))?.Title
-            : null;
-
-        var targetCommentContent = report.TargetCommentId.HasValue
-            ? (await _context.Comments.FindAsync(report.TargetCommentId.Value))?.Content
-            : null;
-
-        var targetUsername = report.TargetUserId.HasValue
-            ? (await _userRepository.GetByIdAsync(report.TargetUserId.Value))?.Username
-            : null;
-
-        var reviewedByAdminUsername = report.ReviewedByAdminId.HasValue
-            ? (await _userRepository.GetByIdAsync(report.ReviewedByAdminId.Value))?.Username
-            : null;
-
         return new ReportDto
         {
             Id = report.Id,
             ReporterId = report.ReporterId,
-            ReporterUsername = report.Reporter.Username,
+            ReporterUsername = report.Reporter?.Username ?? "Unknown",
             ContentType = report.ContentType,
             TargetPostId = report.TargetPostId,
-            TargetPostTitle = targetPostTitle,
+            TargetPostTitle = report.TargetPost?.Title,
             TargetCommentId = report.TargetCommentId,
-            TargetCommentContent = targetCommentContent,
+            TargetCommentContent = report.TargetComment?.Content,
             TargetUserId = report.TargetUserId,
-            TargetUsername = targetUsername,
+            TargetUsername = report.TargetUser?.Username,
             Reason = report.Reason,
             IsReviewed = report.IsReviewed,
             ReviewedByAdminId = report.ReviewedByAdminId,
-            ReviewedByAdminUsername = reviewedByAdminUsername,
+            ReviewedByAdminUsername = report.ReviewedByAdmin?.Username,
             Status = report.Status,
             AdminNotes = report.AdminNotes,
             CreatedAt = report.CreatedAt,

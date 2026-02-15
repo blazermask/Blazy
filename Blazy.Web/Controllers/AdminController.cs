@@ -315,6 +315,47 @@ public class AdminController : Controller
     }
 
     /// <summary>
+    /// Reset user password page
+    /// </summary>
+    public async Task<IActionResult> ResetUserPassword(int id)
+    {
+        var user = await _userService.GetUserByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.TargetUser = user;
+        return View(new Blazy.Core.DTOs.AdminResetPasswordDto { UserId = id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetUserPassword(Blazy.Core.DTOs.AdminResetPasswordDto model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var user = await _userService.GetUserByIdAsync(model.UserId);
+            ViewBag.TargetUser = user;
+            return View(model);
+        }
+
+        var adminId = GetCurrentUserId();
+        var result = await _adminService.ResetUserPasswordAsync(adminId, model.UserId, model.NewPassword);
+
+        if (!result.Success)
+        {
+            TempData["Error"] = result.Message;
+            var user = await _userService.GetUserByIdAsync(model.UserId);
+            ViewBag.TargetUser = user;
+            return View(model);
+        }
+
+        TempData["Success"] = result.Message;
+        return RedirectToAction(nameof(Users));
+    }
+
+    /// <summary>
     /// Revoke admin role from user - ONLY the original admin can do this
     /// </summary>
     [HttpPost]

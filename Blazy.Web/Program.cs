@@ -23,6 +23,11 @@ builder.Services.AddIdentity<Blazy.Core.Entities.User, IdentityRole<int>>(option
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 8;
+
+    // Lockout settings: 5 minute timeout after 3 failed attempts
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 3;
+    options.Lockout.AllowedForNewUsers = true;
 })
 .AddEntityFrameworkStores<BlazyDbContext>()
 .AddDefaultTokenProviders();

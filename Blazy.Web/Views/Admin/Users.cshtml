@@ -132,6 +132,10 @@
                                                 </form>
                                             }
 
+                                            @if (!user.IsAdmin)
+                                            {
+                                                <a asp-action="ResetUserPassword" asp-route-id="@user.Id" class="btn btn-sm btn-outline-warning mb-1">Reset Password</a>
+                                            }
                                             <a asp-action="DeleteUserAccount" asp-route-id="@user.Id" class="btn btn-sm btn-danger">Delete Account</a>
                                         }
                                         else if (isOriginalAdminUser)

@@ -76,4 +76,9 @@ public interface IAdminService
     /// Check if a user is the original admin (cannot be demoted)
     /// </summary>
     Task<bool> IsOriginalAdminAsync(int userId);
+
+    /// <summary>
+    /// Reset a user's password (admin only, no current password required)
+    /// </summary>
+    Task<(bool Success, string Message)> ResetUserPasswordAsync(int adminId, int targetUserId, string newPassword);
 }

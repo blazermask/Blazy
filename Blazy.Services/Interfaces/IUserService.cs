@@ -10,7 +10,7 @@ public interface IUserService
     /// <summary>
     /// Registers a new user
     /// </summary>
-    Task<(bool Success, string Message, UserDto? User)> RegisterAsync(RegisterDto model);
+    Task<(bool Success, string Message, UserDto? User)> RegisterAsync(RegisterDto model, string? ipAddress = null);
 
     /// <summary>
     /// Logs in a user
@@ -95,4 +95,9 @@ public interface IUserService
     /// Check if a username is available (including checking deleted usernames)
     /// </summary>
     Task<bool> IsUsernameAvailableAsync(string username);
+
+    /// <summary>
+    /// Change user password (requires current password verification)
+    /// </summary>
+    Task<(bool Success, string Message)> ChangePasswordAsync(int userId, ChangePasswordDto model);
 }

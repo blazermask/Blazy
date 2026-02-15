@@ -1,8 +1,10 @@
 using Blazy.Core.DTOs;
 using Blazy.Core.Entities;
+using Blazy.Data;
 using Blazy.Repository.Interfaces;
 using Blazy.Services.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
@@ -11,10 +13,12 @@ namespace Blazy.Tests.Services;
 /// <summary>
 /// Unit tests for UserService
 /// </summary>
-public class UserServiceTests
+public class UserServiceTests : IDisposable
 {
     private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<UserManager<User>> _mockUserManager;
+    private readonly Mock<IPostRepository> _mockPostRepository;
+    private readonly BlazyDbContext _context;
     private readonly UserService _userService;
 
     public UserServiceTests()
@@ -23,8 +27,19 @@ public class UserServiceTests
         _mockUserManager = new Mock<UserManager<User>>(
             Mock.Of<IUserStore<User>>(),
             null!, null!, null!, null!, null!, null!, null!, null!);
+        _mockPostRepository = new Mock<IPostRepository>();
 
-        _userService = new UserService(_mockUserRepository.Object, _mockUserManager.Object);
+        var options = new DbContextOptionsBuilder<BlazyDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        _context = new BlazyDbContext(options);
+
+        _userService = new UserService(_mockUserRepository.Object, _mockUserManager.Object, _mockPostRepository.Object, _context);
+    }
+
+    public void Dispose()
+    {
+        _context.Dispose();
     }
 
     [Fact]

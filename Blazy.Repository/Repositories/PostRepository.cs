@@ -226,4 +226,16 @@ public class PostRepository : Repository<Blazy.Core.Entities.Post>, Interfaces.I
         _dbSet.RemoveRange(posts);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<Blazy.Core.Entities.Comment>> GetCommentsByUserAsync(int userId)
+    {
+        return await _context.Comments
+            .Where(c => c.UserId == userId && !c.IsDeleted)
+            .ToListAsync();
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
 }
