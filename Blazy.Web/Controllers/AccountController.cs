@@ -39,7 +39,8 @@ public class AccountController : Controller
             return View(model);
         }
 
-        var result = await _userService.LoginAsync(model);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var result = await _userService.LoginAsync(model, ipAddress);
         if (result.Success)
         {
             // Sign in the user with role claims

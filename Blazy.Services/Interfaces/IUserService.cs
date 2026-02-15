@@ -15,7 +15,7 @@ public interface IUserService
     /// <summary>
     /// Logs in a user
     /// </summary>
-    Task<(bool Success, string Message, UserDto? User)> LoginAsync(LoginDto model);
+    Task<(bool Success, string Message, UserDto? User)> LoginAsync(LoginDto model, string? ipAddress = null);
 
     /// <summary>
     /// Gets a user by ID

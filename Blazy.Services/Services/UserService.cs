@@ -60,7 +60,7 @@ public class UserService : Interfaces.IUserService
             FirstName = model.FirstName,
             LastName = model.LastName,
             Pronouns = model.Pronouns,
-            Bio = "Welcome to my Blazy blog! ♡",
+            Bio = "Welcome to my Blazy blog! \u2661",
             CreatedAt = DateTime.UtcNow
         };
 
@@ -88,8 +88,35 @@ public class UserService : Interfaces.IUserService
         return (true, "Registration successful!", userDto);
     }
 
-    public async Task<(bool Success, string Message, UserDto? User)> LoginAsync(LoginDto model)
+    public async Task<(bool Success, string Message, UserDto? User)> LoginAsync(LoginDto model, string? ipAddress = null)
     {
+        // Use provided IP address or fallback to unknown
+        ipAddress = ipAddress ?? "unknown";
+
+        // Check IP-based lockout (3 failed attempts, 5 minute lockout)
+        var fiveMinutesAgo = DateTime.UtcNow.AddMinutes(-5);
+        var recentFailedAttempts = await _context.LoginAttempts
+            .CountAsync(l => l.IpAddress == ipAddress && !l.WasSuccessful && l.AttemptedAt >= fiveMinutesAgo);
+
+        if (recentFailedAttempts >= 3)
+        {
+            // Find the time of the first failed attempt in the current lockout window
+            var firstFailedAttempt = await _context.LoginAttempts
+                .Where(l => l.IpAddress == ipAddress && !l.WasSuccessful && l.AttemptedAt >= fiveMinutesAgo)
+                .OrderBy(l => l.AttemptedAt)
+                .FirstOrDefaultAsync();
+
+            if (firstFailedAttempt != null)
+            {
+                var lockoutEnd = firstFailedAttempt.AttemptedAt.AddMinutes(5);
+                var remainingMinutes = Math.Ceiling((lockoutEnd - DateTime.UtcNow).TotalMinutes);
+                if (remainingMinutes > 0)
+                {
+                    return (false, $"Too many failed login attempts from your IP address. Please try again in {remainingMinutes} minute(s).", null);
+                }
+            }
+        }
+
         var user = await _userRepository.GetByUsernameAsync(model.UsernameOrEmail);
         if (user == null)
         {
@@ -98,45 +125,63 @@ public class UserService : Interfaces.IUserService
 
         if (user == null)
         {
-            return (false, "Invalid username or password.", null);
-        }
-
-        // Check if the user is currently locked out
-        if (await _userManager.IsLockedOutAsync(user))
-        {
-            var lockoutEnd = await _userManager.GetLockoutEndDateAsync(user);
-            if (lockoutEnd.HasValue)
+            // Record failed login attempt
+            await _context.LoginAttempts.AddAsync(new LoginAttempt
             {
-                var remainingMinutes = Math.Ceiling((lockoutEnd.Value - DateTimeOffset.UtcNow).TotalMinutes);
-                return (false, $"Account is locked due to too many failed login attempts. Please try again in {remainingMinutes} minute(s).", null);
+                IpAddress = ipAddress,
+                AttemptedUsername = model.UsernameOrEmail,
+                WasSuccessful = false,
+                AttemptedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
+
+            // Recalculate remaining attempts after recording this failure
+            var updatedFailedAttempts = await _context.LoginAttempts
+                .CountAsync(l => l.IpAddress == ipAddress && !l.WasSuccessful && l.AttemptedAt >= fiveMinutesAgo);
+            var attemptsRemaining = 3 - updatedFailedAttempts;
+
+            if (attemptsRemaining > 0)
+            {
+                return (false, $"Invalid username or password. {attemptsRemaining} attempt(s) remaining before IP lockout.", null);
             }
-            return (false, "Account is temporarily locked. Please try again later.", null);
+            return (false, "Invalid username or password. Your IP address is now temporarily locked.", null);
         }
 
+        // Verify password
         var result = await _userManager.CheckPasswordAsync(user, model.Password);
         if (!result)
         {
-            // Increment failed access count
-            await _userManager.AccessFailedAsync(user);
-
-            // Check if this failure caused a lockout
-            if (await _userManager.IsLockedOutAsync(user))
+            // Record failed login attempt
+            await _context.LoginAttempts.AddAsync(new LoginAttempt
             {
-                return (false, "Account is now locked due to too many failed login attempts. Please try again in 5 minutes.", null);
-            }
+                IpAddress = ipAddress,
+                AttemptedUsername = model.UsernameOrEmail,
+                WasSuccessful = false,
+                AttemptedAt = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
 
-            var failedCount = await _userManager.GetAccessFailedCountAsync(user);
-            var attemptsRemaining = 3 - failedCount;
+            // Recalculate remaining attempts after recording this failure
+            var updatedFailedAttempts = await _context.LoginAttempts
+                .CountAsync(l => l.IpAddress == ipAddress && !l.WasSuccessful && l.AttemptedAt >= fiveMinutesAgo);
+            var attemptsRemaining = 3 - updatedFailedAttempts;
+
             if (attemptsRemaining > 0)
             {
-                return (false, $"Invalid username or password. {attemptsRemaining} attempt(s) remaining before lockout.", null);
+                return (false, $"Invalid username or password. {attemptsRemaining} attempt(s) remaining before IP lockout.", null);
             }
-
-            return (false, "Invalid username or password.", null);
+            return (false, "Invalid username or password. Your IP address is now temporarily locked.", null);
         }
 
-        // Reset failed access count on successful login
-        await _userManager.ResetAccessFailedCountAsync(user);
+        // Record successful login attempt
+        await _context.LoginAttempts.AddAsync(new LoginAttempt
+        {
+            IpAddress = ipAddress,
+            AttemptedUsername = user.Username,
+            WasSuccessful = true,
+            AttemptedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
 
         var userDto = await MapToUserDto(user, user.Id);
         return (true, "Login successful!", userDto);
@@ -160,7 +205,6 @@ public class UserService : Interfaces.IUserService
         {
             return null;
         }
-
         return await MapToUserDto(user, currentUserId);
     }
 
@@ -316,7 +360,6 @@ public class UserService : Interfaces.IUserService
         {
             return false;
         }
-
         return await _userManager.IsInRoleAsync(user, "Admin");
     }
 
@@ -327,7 +370,6 @@ public class UserService : Interfaces.IUserService
         {
             return (false, "User not found.");
         }
-
         // This would need additional logic to manage tags
         // For now, return success
         return (true, "Tags updated successfully!");
